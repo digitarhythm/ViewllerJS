@@ -1,0 +1,30 @@
+#=============================================================================
+#
+# Application Library
+#
+#=============================================================================
+class applicationMain extends UIView
+  constructor:(param)->super(param)
+  didFinishLaunching:->
+    bounds = CVApplication.getBounds()
+
+    CVAPICALL
+      file: "sampleapi"
+      endpoint: "version"
+    , (ret) =>
+      version = new UITextView(CVRectMake(
+        8
+        8
+        240
+        64
+      ))
+      version.textAlign = "UITextAlignmentCenter"
+      version.backgroundColor = CVColor(0, 127, 255, 1.0)
+      version.font.color = CVColor(255, 255, 255, 1.0)
+      version.text = "Version: #{ret.version}"
+      version.draggable = true
+      @addSubview(version)
+
+  didBrowserResize:(bounds)->
+    super()
+

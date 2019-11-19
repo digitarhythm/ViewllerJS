@@ -1,0 +1,8 @@
+{
+  "style": {
+    "highlight": "darcula"
+  },
+  "environment": {
+    "rollback_hist": 10
+  }
+}

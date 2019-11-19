@@ -1,0 +1,12 @@
+{
+  "network": {
+    "port": 5000,
+    "protocol": "http",
+    "ssl_key": "",
+    "ssl_cert": ""
+  },
+  "database": {
+    "dbfile": "application.db",
+    "schema": "schema.json"
+  }
+}

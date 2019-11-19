@@ -1,0 +1,10 @@
+#!/bin/bash
+
+COMPILER="terffee"
+
+#============================================================================
+# compile all scripts
+#============================================================================
+echo "viewkit compiling..."
+${COMPILER} -c ./src/viewkit -o ./libs/viewller/viewkit.min.js -c ./src/libs/viewller -o ./libs/viewller/mainview.min.js -c ./src/libs/model -o ./libs/model/
+${COMPILER} -w -c ./src/viewkit -o ./libs/viewller/viewkit.min.js -c ./src/libs/viewller -o ./libs/viewller/mainview.min.js -c ./src/libs/model -o ./libs/model/

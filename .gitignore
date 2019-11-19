@@ -1,0 +1,6 @@
+.git
+package-lock.json
+libs/model/*.js
+libs/viewller/*.js
+libs/database/*
+!libs/database/.gitkeep

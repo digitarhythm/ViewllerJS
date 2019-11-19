@@ -1,0 +1,765 @@
+#!/usr/bin/env coffee
+
+Promise = require("bluebird")
+fs = require("fs-extra")
+Path = require("path")
+echo = require("ndlog").echo
+exec = require("child_process").exec
+execSync = require("child_process").execSync
+async = require("async")
+spawn = require("child_process").spawn
+date_util = require("date-utils")
+argv = require("argv")
+chokidar = require("chokidar")
+dateformat = require('dateformat')
+sqlite3 = require('sqlite3').verbose()
+
+#=============================================================================
+# file exists check
+#=============================================================================
+isExists = (path) ->
+  try
+    stat = fs.statSync(path)
+    ret = stat
+  catch err
+    ret = undefined
+  return ret
+
+#============================================================================
+# copy file
+#============================================================================
+copy_file = (from, to) ->
+  return new Promise (resolve, reject) ->
+    try
+      ws = fs.createWriteStream(to)
+      fs.createReadStream(from).pipe(ws)
+      ws.on 'finish', ->
+        resolve(0)
+    catch e
+      reject(-2)
+
+#============================================================================
+# copy stationary file
+#============================================================================
+copy_list_file = (filelist = undefined) ->
+  return new Promise (resolve, reject) ->
+    if (!filelist?)
+      reject(-1)
+
+    flag = false
+    async.whilst ->
+      if (filelist.length > 0)
+        return true
+      else
+        return false
+    , (callback) ->
+      list = filelist.shift()
+      from = list.from
+      to = list.to
+      if (!isExists(to)?)
+        flag = true
+        copy_file(from, to).then (err) ->
+          if (err)
+            callback(err, null)
+          else
+            callback(null, 0)
+      else
+        callback(null, 0)
+    , (err, result) ->
+      if (err)
+        reject(err)
+      else
+        resolve(0)
+
+#=============================================================================
+# create directory
+#=============================================================================
+system_check = ->
+  return new Promise (resolve, reject) ->
+    #=========================================================================
+    # create deploy direcotry
+    #=========================================================================
+    # create deploy directory(src)
+    target = "#{APPS_DIR}/deploy"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    #=========================================================================
+    # create src direcotry
+    #=========================================================================
+    # create model directory(src)
+    target = "#{APPS_DIR}/src/model"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create viewller directory(src)
+    target = "#{APPS_DIR}/src/viewller"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create template directory(src)
+    target = "#{APPS_DIR}/src/template"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    #=========================================================================
+    # create develop direcotry
+    #=========================================================================
+    # create database directory(develop)
+    target = "#{APPS_DIR}/develop/database"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create model js directory(develop)
+    target = "#{APPS_DIR}/develop/js/model"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create viewller js directory(develop)
+    target = "#{APPS_DIR}/develop/js/viewller"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create library directory(develop)
+    target = "#{APPS_DIR}/develop/library"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create public directory(develop)
+    target = "#{APPS_DIR}/develop/public"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create plugins directory(develop)
+    target = "#{APPS_DIR}/develop/plugins"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create config directory
+    target = "#{APPS_DIR}/config"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+    try
+      fs.unlinkSync("./config")
+    fs.symlink "./apps/config", "./config", (err)->
+      if (err)
+        reject(-1)
+      else
+        resolve(0)
+
+copy_stationary_file = ->
+  return new Promise (resolve, reject) ->
+    # copy stationary file
+    filelist = [
+      {"from": "#{MODULES_DIR}/template/default.json.org", "to": "#{APPS_DIR}/config/default.json"}
+      {"from": "#{MODULES_DIR}/template/develop.json.org", "to": "#{APPS_DIR}/config/develop.json"}
+      {"from": "#{MODULES_DIR}/template/application.json.org", "to": "#{APPS_DIR}/config/application.json"}
+      {"from": "#{MODULES_DIR}/template/applicationMain.coffee.org", "to": "#{APPS_DIR}/src/viewller/applicationMain.coffee"}
+      {"from": "#{MODULES_DIR}/template/sampleapi.coffee.org", "to": "#{APPS_DIR}/src/model/sampleapi.coffee"}
+      {"from": "#{MODULES_DIR}/template/sorrymode.ect", "to": "#{APPS_DIR}/src/template/sorrymode.ect"}
+      {"from": "#{MODULES_DIR}/template/schema.json.org", "to": "#{APPS_DIR}/develop/database/schema.json"}
+    ]
+    copy_list_file(filelist).then (err)->
+      if (err)
+        reject(-1)
+      else
+        resolve(0)
+
+#============================================================================
+# create system database
+#============================================================================
+create_db = =>
+  return new Promise (resolve, reject) ->
+    default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
+    develop_dbfile = "#{APPS_DIR}/develop/database/#{DEVELOPJSON.database.dbfile}"
+
+    try
+      sql = "CREATE TABLE IF NOT EXISTS keyvalue (key STRING UNIQUE PRIMARY KEY, value STRING);"
+      if (isExists(default_dbfile)?)
+        appsdb_default = new sqlite3.Database(default_dbfile)
+        appsdb_default.run(sql)
+      if (isExists(develop_dbfile)?)
+        appsdb_develop = new sqlite3.Database(develop_dbfile)
+        appsdb_develop.run(sql)
+    catch e
+      console.log "db error 1."
+      reject(e)
+
+    sql = "CREATE TABLE IF NOT EXISTS preference (key STRING UNIQUE PRIMARY KEY, value STRING);"
+    try
+      SYSTEMDB.run(sql)
+      resolve(0)
+    catch e
+      console.log "db error 2."
+      reject(e)
+
+#============================================================================
+# compile all scripts
+#============================================================================
+compile_all = (node_env = "develop")->
+  #==========================================================================
+  # development compile
+  #==========================================================================
+  if (node_env == "develop")
+    console.log("viewkit compiling for develop.")
+    console.log("user view scripts compiling...")
+    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/viewller -c #{APPS_DIR}/src/viewller/*.coffee").toString()
+    console.log(ret) if (ret != "")
+
+    console.log("user model/controller scripts compiling...")
+    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/model -c #{APPS_DIR}/src/model/*.coffee").toString()
+    console.log(ret) if (ret != "")
+    ret = execSync("date +'%Y.%m.%d %H:%M:%S'").toString()
+    console.log("Develop compiled: "+ret)
+
+  #==========================================================================
+  # production compile
+  #==========================================================================
+  else
+    console.log("viewkit compiling for production.")
+    console.log("user view scripts compiling...")
+    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/viewller -c #{APPS_DIR}/src/viewller/*.coffee").toString()
+    console.log(ret) if (ret != "")
+
+    console.log("user model/controller scripts compiling...")
+    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/model -c #{APPS_DIR}/src/model/*.coffee").toString()
+    console.log(ret) if (ret != "")
+    ret = execSync("date +'%Y.%m.%d %H:%M:%S'").toString()
+    console.log("Production compiled: "+ret)
+
+
+#============================================================================
+# exec application on development mode
+#============================================================================
+start_development = ->
+  compile_all("develop")
+  env = Object.create(process.env)
+  env.NODE_ENV = "develop"
+  spawn "node-dev", ["#{NODE_MODULES}/viewller/libs/model/apps.min.js"], {env: env, stdio: "inherit"}
+
+#============================================================================
+# exec application on production mode
+#============================================================================
+start_production = (restart = false) ->
+  port = DEFAULTJSON.network.port
+  env = Object.create(process.env)
+  env.NODE_ENV = ""
+
+  if (restart)
+    spawn "forever", ["restart", CWD], {env: env}
+
+  else
+    date = new Date()
+    now = dateformat(date, 'yyyymmdd')
+    logpath = "#{APPS_DIR}/production/logs/viewller#{now}.log"
+
+    try
+      fs.statSync(logpath)
+      spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-a", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/model/apps.min.js"], {env: env}
+    catch e
+      spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/model/apps.min.js"], {env: env}
+
+  console.log "===> Production listening on *: "+port
+
+#============================================================================
+# deploy application on forever
+#============================================================================
+deploy_application = ->
+  envjson = require("#{APPS_DIR}/config/application.json")
+  rbhist = envjson.environment.rollback_hist || 10
+
+  # create deploy directory(src)
+  target = "#{APPS_DIR}/deploy"
+  if (!isExists(target)?)
+    fs.mkdirsSync(target)
+
+  fpath = "#{APPS_DIR}/deploy/"+(("0".repeat(DEPLOY_LENGTH))+rbhist.toString()).slice(-DEPLOY_LENGTH)
+
+  # delete max number of deploy directory
+  if (isExists(fpath)?)
+    fs.removeSync(fpath)
+
+  # rotation deploy directory
+  async.whilst ->
+    if (rbhist > 1)
+      return true
+    else
+      return false
+  , (callback) ->
+    dst = rbhist--
+    src = dst - 1
+
+    # Rename dst directory to src directory if exists src directory
+    srcpath = "deploy/"+(("0".repeat(DEPLOY_LENGTH))+src.toString()).slice(-DEPLOY_LENGTH)
+    dstpath = "deploy/"+(("0".repeat(DEPLOY_LENGTH))+dst.toString()).slice(-DEPLOY_LENGTH)
+    if (isExists("#{APPS_DIR}/#{srcpath}")?)
+      fs.renameSync("#{APPS_DIR}/#{srcpath}", "#{APPS_DIR}/#{dstpath}")
+    callback(null, 0)
+
+  , (err, result) ->
+    # make symbolic link to production directory
+    fpath = "deploy/"+(("0".repeat(DEPLOY_LENGTH))+"1").slice(-DEPLOY_LENGTH)
+    fs.mkdirsSync("#{APPS_DIR}/#{fpath}")
+
+    try
+      target = "#{APPS_DIR}/production"
+      fs.unlinkSync(target)
+    fs.symlinkSync("./#{fpath}", target)
+
+    dir = "#{fpath}/js/viewller"
+    fs.mkdirsSync("#{APPS_DIR}/#{dir}")
+    dir = "#{fpath}/js/model"
+    fs.mkdirsSync("#{APPS_DIR}/#{dir}")
+    dir = "#{fpath}/public"
+    fs.mkdirsSync("#{APPS_DIR}/#{dir}")
+
+    # create database directory
+    target = "#{APPS_DIR}/production/database"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create logs directory
+    target = "#{APPS_DIR}/production/logs"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # Copy develop db schema to production directory
+    target = "#{APPS_DIR}/production/database/schema.json"
+    if (isExists(target)?)
+      fs.removeSync(target)
+    fs.copySync("#{APPS_DIR}/develop/database/schema.json", target)
+
+    # Copy develop plugins directory to production directory
+    target = "#{APPS_DIR}/production/plugins"
+    if (isExists(target)?)
+      fs.removeSync(target)
+    fs.copySync("#{APPS_DIR}/develop/plugins", target)
+
+    # Copy develop library directory to production directory
+    target = "#{APPS_DIR}/production/library"
+    if (isExists(target)?)
+      fs.removeSync(target)
+    fs.copySync("#{APPS_DIR}/develop/library", target)
+
+    # Compile production code
+    compile_all("production")
+
+#============================================================================
+# rollback production application
+#============================================================================
+rollback_application = (num)->
+  target_dir = ("0".repeat(4)+parseInt(num)).slice(-DEPLOY_LENGTH)
+  console.log "rollback application for production environment: #"+target_dir
+  srcpath = "deploy/#{target_dir}"
+  if (!isExists("#{APPS_DIR}/#{srcpath}"))
+    console.log "Not found target deploy environment."
+  else
+    # Create producion symlink(if exists production symlink to delete one)
+    try
+      fs.unlinkSync("#{APPS_DIR}/production")
+    fs.symlinkSync("./#{srcpath}", "#{APPS_DIR}/production")
+    system_check().then ->
+      port = DEFAULTJSON.network.port
+      env = Object.create(process.env)
+      env.NODE_ENV = ""
+      spawn "forever", ["restart", CWD], {env: env, stdio: "inherit"}
+      console.log "===> Production listening on *: "+port
+
+#============================================================================
+# list up rollback environment
+#============================================================================
+listup_rollback = ->
+  path = "#{APPS_DIR}/deploy"
+  fs.readdir path, (err, lists) ->
+    filelist = []
+    console.log("Rollback environment list")
+    lists.map (d, i) ->
+      idx = ("0".repeat(DEPLOY_LENGTH)+(i+1)).slice(-DEPLOY_LENGTH)
+      fname = "#{path}/#{d}"
+      fs.stat fname, (err, stats) ->
+        today = new Date(stats.mtimeMs)
+        year = ("0".repeat(4)+today.getFullYear()).slice(-4)
+        month = ("0".repeat(2)+(today.getMonth()+1)).slice(-2)
+        day = ("0".repeat(2)+today.getDate()).slice(-2)
+        hour = ("0".repeat(2)+today.getHours()).slice(-2)
+        minute = ("0".repeat(2)+today.getMinutes()).slice(-2)
+        second = ("0".repeat(2)+today.getSeconds()).slice(-2)
+        datestr = "#{year}.#{month}.#{day} #{hour}:#{minute}:#{second}"
+        console.log("#{idx}: Date:#{datestr}")
+
+
+#============================================================================
+# stop application on forever
+#============================================================================
+stop_production = ->
+  env = Object.create(process.env)
+  spawn "forever", ["stop", CWD], {env: env, stdio: "inherit"}
+
+#============================================================================
+# create class file
+#============================================================================
+createclass = (TARGET, CLASSNAME) ->
+  return new Promise (resolve, reject) ->
+    newclasspath = "#{APPS_DIR}/src/viewller/#{TARGET}.coffee"
+    if (isExists(newclasspath)?)
+      message = "Class File Exists."
+      err = -3
+      reject
+        message: message
+        err: err
+    else
+      __create_new_class_file(TARGET, CLASSNAME, newclasspath).then (err)->
+        if (err == 0)
+          message = "create class file."
+          resolve
+            message: message
+            err: err
+        else
+          reject
+            message: message
+            err: err
+
+#=============================================================================
+# create new class file
+#=============================================================================
+__create_new_class_file = (TARGET, CLASSNAME, newclasspath)->
+  return new Promise (resolve, reject)->
+    # 継承するクラスファイルのあるディレクトリ
+    dir = "#{SRC_DIR}/viewkit"
+    # ファイル名一覧を取得する
+    fs.readdir dir, (err, lists)->
+      # クラス名からクラスファイル名を探す
+      for cftmp in lists
+        regexp = new RegExp("..\.#{CLASSNAME}")
+        if (cftmp.match(regexp))
+          cfname = cftmp
+          break
+      # クラスファイル名からクラスファイルパスを生成
+      classpath = "#{dir}/#{cfname}"
+      if (isExists(classpath)?)
+        classfile = fs.readFileSync(classpath, "UTF-8").replace(/\n/g, "[BR]")
+        regstr = /---model_start---(.*)---require_method---/
+        match = regstr.exec(classfile)
+        if (match.length > 1)
+          modelstr = match[1].replace(/\[BR\]/, "")
+          modelstr = modelstr.replace(/\[BR\]/g, "\n")
+          modelstr = modelstr.replace(/\[classname\]/, TARGET)
+
+          modelstr += __get_require_method(dir, cfname, lists).replace(/\[BR\]/gi, "\n")
+          fs.writeFileSync(newclasspath, modelstr)
+          err = 0
+        else
+          message = "Bad class file."
+          err = -2
+      else
+        message = "Bad class name"
+        err = -1
+      resolve(err)
+
+__get_require_method = (dir, fname, filelists)->
+  require = ""
+  classfile = fs.readFileSync("#{dir}/#{fname}", "UTF-8").replace(/\n/g, "[BR]")
+  regstr = /---require_method---(.*)---model_end---/
+  match = regstr.exec(classfile)
+  if (match.length > 1)
+    require = match[1]
+
+  regstr = /class .*? extends (.*?)\[BR\]/
+  match = regstr.exec(classfile)
+  if (match.length > 1)
+    extd = match[1]
+    if (extd != "CVObject")
+      extdfname = __search_class_fname(extd, filelists)
+      if (extdfname?)
+        require += __get_require_method(dir, extdfname, filelists)
+  return require
+
+# filelistsの中からclassnameの定義クラスファイル名を探す
+__search_class_fname = (classname, filelists)->
+  extdfname = undefined
+  for f in filelists
+    regexp = new RegExp("..\.#{classname}")
+    if (f.match(regexp))
+      extdfname = f
+      break
+  return extdfname
+
+#=============================================================================
+# watching source file by terffee
+#=============================================================================
+watch_source = ->
+  env = Object.create(process.env)
+  spawn COMPILER, ["-m", "-w", "-c", "#{APPS_DIR}/src/viewller", "-o", "#{APPS_DIR}/develop/js/viewller/", "-c", "#{APPS_DIR}/src/model", "-o", "#{APPS_DIR}/develop/js/model/"], {env: env, stdio: "inherit"}
+
+#=============================================================================
+# set sorry mode
+#=============================================================================
+set_sorrymode = (flag) ->
+  return new Promise (resolve, reject) ->
+    sql = "REPLACE INTO preference (key, value) VALUES (?, ?);"
+    arr = ['sorrymode', flag]
+    SYSTEMDB.all sql, arr, (err, res) ->
+      resolve(0)
+
+#=============================================================================
+#=============================================================================
+#=============================================================================
+# main process
+#=============================================================================
+#=============================================================================
+#=============================================================================
+
+#=============================================================================
+# compile user source
+#=============================================================================
+argv.option
+  name: "build"
+  short: "b"
+  type: "string"
+  description: "build application.)"
+  example: "'viewller -b' or 'viewller --build'"
+
+#=============================================================================
+# watch modify source
+#=============================================================================
+argv.option
+  name: "watch"
+  short: "w"
+  type: "string"
+  description: "develop application while file modify watching."
+  example: "'viewller -w' or 'viewller --watch'"
+
+#=============================================================================
+# create original class file
+#=============================================================================
+argv.option
+  name: "create"
+  short: "c"
+  type: "string"
+  description: "create new class."
+  example: "'viewller -c base new or 'viewller --create base new'"
+
+#=============================================================================
+# deploy development environment to production environment
+#=============================================================================
+argv.option
+  name: "deploy"
+  short: "d"
+  type: "string"
+  description: "deploy development environment to production environment."
+  example: "'viewller -d' or 'viewller --deploy'"
+
+#=============================================================================
+# start sorry mode for production
+#=============================================================================
+argv.option
+  name: "sorry"
+  short: "s"
+  type: "string"
+  description: "start display to sorry mode for production."
+  example: "'viewller -s' or 'viewller --sorry'"
+
+#=============================================================================
+# start normal mode for production
+#=============================================================================
+argv.option
+  name: "normal"
+  short: "n"
+  type: "string"
+  description: "start display to normal mode for production."
+  example: "'viewller -n' or 'viewller --normal'"
+
+#=============================================================================
+# activate application debug and production
+#=============================================================================
+argv.option
+  name: "activate"
+  short: "a"
+  type: "string"
+  description: "activatate application to debug and production."
+  example: "'viewller -a' or 'viewller --activate'"
+
+#=============================================================================
+# terminate application
+#=============================================================================
+argv.option
+  name: "term"
+  short: "t"
+  type: "string"
+  description: "terminate production application."
+  example: "'viewller -t' or 'viewller --term'"
+
+#=============================================================================
+# list rollback environment
+#=============================================================================
+argv.option
+  name: "list"
+  short: "l"
+  type: "string"
+  description: "list up rollback environment."
+  example: "'viewller -l' or 'viewller --list'"
+
+#=============================================================================
+# rollback application
+#=============================================================================
+argv.option
+  name: "rollback"
+  short: "r"
+  type: "string"
+  description: "rollback production application."
+  example: "'viewller -r' or 'viewller --rollback'"
+
+OPT = argv.run()
+env = Object.create(process.env)
+NODE_ENV = env.NODE_ENV
+CWD = fs.realpathSync(".")
+NODE_MODULES = "#{CWD}/node_modules"
+APPS_DIR = "#{CWD}/apps"
+MODULES_DIR = fs.realpathSync(__dirname+"/..")
+SRC_DIR = "#{MODULES_DIR}/src"
+COMPILER = "#{NODE_MODULES}/.bin/terffee"
+COMPILER_DEV = "#{NODE_MODULES}/.bin/coffee"
+TERSER = "#{NODE_MODULES}/.bin/terser"
+DEPLOY_LENGTH = 4
+SYSTEMDB = new sqlite3.Database("#{MODULES_DIR}/libs/database/system.db")
+DEFAULTJSON = undefined
+DEVELOPJSON = undefined
+
+system_check().then ->
+  copy_stationary_file()
+.then ->
+  DEFAULTJSON = require("#{APPS_DIR}/config/default.json")
+  DEVELOPJSON = require("#{APPS_DIR}/config/develop.json")
+  create_db()
+.then ->
+  WATCH = 0
+  CMD = 0
+  for key, val of OPT.options
+    switch (key)
+      when "watch"
+        WATCH = 1
+      when "build"
+        CMD = 1
+      when "create"
+        CMD = 2
+        CLASSNAME = val
+        TARGET = OPT.targets[0]
+      when "activate"
+        CMD = 3
+      when "sorry"
+        CMD = 4
+      when "normal"
+        CMD = 5
+      when "deploy"
+        CMD = 7
+      when "term"
+        CMD = 8
+      when "rollback"
+        TARGET = val
+        CMD = 9
+      when "list"
+        CMD = 10
+
+  if (CMD == 0 && WATCH == 0)
+    argv.run(["-h"])
+    return 1
+
+  switch (CMD)
+    #==========================================================================
+    # watch only
+    #==========================================================================
+    when 0
+      watch_source()
+
+    #==========================================================================
+    # build
+    #==========================================================================
+    when 1
+      console.log("[build application]")
+      compile_all("develop")
+      if (WATCH == 1)
+        watch_source()
+
+    #==========================================================================
+    # create class
+    #==========================================================================
+    when 2
+      createclass(TARGET, CLASSNAME).then (ret) ->
+        console.log(ret.message)
+        err = ret.err
+      .catch (err) ->
+        console.log(err.message)
+        err = err.err
+
+    #==========================================================================
+    # activate application
+    #==========================================================================
+    when 3
+      err = 3
+      if (isExists("#{APPS_DIR}/production")?)
+        console.log "start production"
+        start_production()
+      start_development()
+
+    #==========================================================================
+    # change to sorry mode for production
+    #==========================================================================
+    when 4
+      err = 4
+      set_sorrymode(true).then ->
+        env = Object.create(process.env)
+        env.NODE_ENV = ""
+        spawn "forever", ["restart", CWD], {env: env}
+        console.log("change to sorry mode.")
+
+    #==========================================================================
+    # change to normal mode for production
+    #==========================================================================
+    when 5
+      err = 5
+      set_sorrymode(false).then ->
+        env = Object.create(process.env)
+        env.NODE_ENV = ""
+        spawn "forever", ["restart", CWD], {env: env}
+        console.log("change to normal mode.")
+
+    #==========================================================================
+    # deploy application develop environment to production environment
+    #==========================================================================
+    when 7
+      err = 7
+      set_sorrymode(true).then ->
+        stop_production()
+        deploy_application()
+        start_production()
+
+    #==========================================================================
+    # terminate application
+    #==========================================================================
+    when 8
+      err = 8
+      stop_production()
+
+    #==========================================================================
+    # rollback application
+    #==========================================================================
+    when 9
+      err = 9
+      if (TARGET == "true")
+        console.log "Please, input rollback number."
+      else
+        rollback_application(TARGET)
+
+    #==========================================================================
+    # list up rollback environment
+    #==========================================================================
+    when 10
+      err = 10
+      listup_rollback()
+
+    #==========================================================================
+    # etc
+    #==========================================================================
+    else
+      err = -99
+

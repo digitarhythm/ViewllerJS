@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+</html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/cupertino/jquery-ui.css">
+    <% for f in @stylesheet : %>
+      <link rel="stylesheet" type="text/css" href="<%= @pkgname %>/<%= f %>">
+    <% end %>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.finger/0.1.6/jquery.finger.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
+    <script type="text/javascript">
+      node_pkg = "<%= @pkgname %>";
+      node_env = "<%= @node_env %>";
+      node_origin = window.origin+"/<%= @pkgname %>";
+    </script>
+    <script type="text/javascript" src="<%= @pkgname %>/sysviews/mainview.min.js"></script>
+    <script type="text/javascript" src="<%= @pkgname %>/sysviews/viewkit.min.js"></script>
+    <% for f in @syspluginlist : %>
+      <script type="text/javascript" src="<%= @pkgname %>/<%= f %>"></script>
+    <% end %>
+    <% for f in @pluginlist : %>
+      <script type="text/javascript" src="<%= @pkgname %>/<%= f %>"></script>
+    <% end %>
+    <% for f, i in @sourcefilelist : %>
+      <script type="text/javascript" id="<%= i %>" src="<%= @pkgname %>/<%= f %>"></script>
+    <% end %>
+  </head>
+  <body style="margin: 0px 0px 0px 0px;">
+  </body>
+</html>
+
