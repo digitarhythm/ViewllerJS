@@ -2,7 +2,7 @@
 
 ## English
 
-DOCUMENTATION: https://www.digitarhythm.net/viewllerjs
+DOCUMENTATION: https://www.digitarhythm.net/ViewllerJS
 
 If you have any impressions after using it, please contact [Twitter][0].
 
