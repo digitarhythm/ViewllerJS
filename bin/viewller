@@ -266,7 +266,10 @@ start_production = (restart = false) ->
 #============================================================================
 deploy_application = ->
   envjson = require("#{APPS_DIR}/config/application.json")
-  rbhist = envjson.environment.rollback_hist || 10
+  try
+    rbhist = envjson.environment.rollback_hist
+  catch e
+    rbhist = 10
 
   # create deploy directory(src)
   target = "#{APPS_DIR}/deploy"
