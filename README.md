@@ -102,9 +102,9 @@ You can connect to the production environment in the above.
 ```
 $ npm init
 ```
-- 次に、CreateviewJSをインストールします。
+- 次に、ViewllerJSをインストールします。
 ```
-$ npm i --save viewller
+$ npm i viewller
 ```
 - 下記コマンドでCoffeeScriptファイルの修正を監視し、自動コンパイルします。
 ```
