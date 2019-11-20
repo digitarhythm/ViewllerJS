@@ -51,7 +51,7 @@ app.use("/#{pkgname}/viewller", express.static("#{__cwd}/apps/#{__jsdir}/js/view
 #============================================================================
 # load system module
 #============================================================================
-global.CVREQUIRE = (module)->
+global.FWREQUIRE = (module)->
   modulepath = "#{process.cwd()}/node_modules/viewller/libs/model/#{module}.min"
   mod = require(modulepath)
   return mod
