@@ -700,6 +700,7 @@ system_check().then ->
     when 3
       err = 3
       if (isExists("#{APPS_DIR}/production")?)
+        stop_production()
         console.log "start production"
         start_production()
       start_development()
