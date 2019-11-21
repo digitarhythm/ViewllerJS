@@ -373,7 +373,12 @@ rollback_application = (num)->
 #============================================================================
 listup_rollback = ->
   path = "#{APPS_DIR}/deploy"
-  curr = Path.basename(fs.realpathSync("#{APPS_DIR}/production"))
+  try
+    curr = Path.basename(fs.realpathSync("#{APPS_DIR}/production"))
+  catch e
+    console.log "Deployed application was not found."
+    return
+
   fs.readdir path, (err, lists) ->
     filelist = []
     console.log("Rollback environment list")
