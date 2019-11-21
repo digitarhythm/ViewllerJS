@@ -373,6 +373,7 @@ rollback_application = (num)->
 #============================================================================
 listup_rollback = ->
   path = "#{APPS_DIR}/deploy"
+  curr = Path.basename(fs.realpathSync("#{APPS_DIR}/production"))
   fs.readdir path, (err, lists) ->
     filelist = []
     console.log("Rollback environment list")
@@ -388,7 +389,11 @@ listup_rollback = ->
         minute = ("0".repeat(2)+today.getMinutes()).slice(-2)
         second = ("0".repeat(2)+today.getSeconds()).slice(-2)
         datestr = "#{year}.#{month}.#{day} #{hour}:#{minute}:#{second}"
-        console.log("#{idx}: Date:#{datestr}")
+        if (d == curr)
+          currpos = " <<< "
+        else
+          currpos = ""
+        console.log "#{idx}: Date:#{datestr}#{currpos}"
 
 
 #============================================================================
