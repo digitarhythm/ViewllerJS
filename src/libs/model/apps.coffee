@@ -57,6 +57,16 @@ global.FWREQUIRE = (module)->
   return mod
 
 #============================================================================
+# decrypt
+#============================================================================
+__decrypt = (str) ->
+  private_path = "#{APPS_DIR}/config/private_key.pem"
+  private_key = fs.readFileSync(private_path, "UTF-8")
+  key = new NodeRSA(private_key, 'pkcs1-private-pem')
+  decrypt_str = key.decrypt(str, 'utf8')
+  return decrypt_str
+
+#============================================================================
 # directory check
 #============================================================================
 __isDir = (filepath) ->

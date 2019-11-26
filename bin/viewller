@@ -13,6 +13,26 @@ argv = require("argv")
 chokidar = require("chokidar")
 dateformat = require('dateformat')
 sqlite3 = require('sqlite3').verbose()
+NodeRSA = require('node-rsa')
+
+#=============================================================================
+# create public key and private key
+#=============================================================================
+createKeyPair = ->
+  console.log ".....creating RSA Key pair"
+  keyseed = new NodeRSA({ b: 2048 })
+  PUBLIC_KEY = keyseed.exportKey('pkcs1-public-pem')
+  PRIVATE_KEY = keyseed.exportKey('pkcs1-private-pem')
+  public_path = "#{APPS_DIR}/config/public_key.pem"
+  private_path = "#{APPS_DIR}/config/private_key.pem"
+  fs.access public_path, fs.constants.F_OK, (error) ->
+    if (error)
+      fs.writeFileSync(public_path, PUBLIC_KEY)
+      fs.chmodSync(public_path, 0o600)
+  fs.access private_path, fs.constants.F_OK, (error) ->
+    if (error)
+      fs.writeFileSync(private_path, PRIVATE_KEY)
+      fs.chmodSync(private_path, 0o600)
 
 #=============================================================================
 # file exists check
@@ -170,7 +190,7 @@ copy_stationary_file = ->
 #============================================================================
 create_db = =>
   return new Promise (resolve, reject) ->
-    default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
+    #default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
     develop_dbfile = "#{APPS_DIR}/develop/database/#{DEVELOPJSON.database.dbfile}"
 
     try
@@ -185,7 +205,7 @@ create_db = =>
       console.log "db error 1."
       reject(e)
 
-    sql = "CREATE TABLE IF NOT EXISTS preference (key STRING UNIQUE PRIMARY KEY, value STRING);"
+    sql = "CREATE TABLE IF NOT EXISTS _syspref (key STRING UNIQUE PRIMARY KEY, value STRING);"
     try
       SYSTEMDB.run(sql)
       resolve(0)
@@ -509,7 +529,7 @@ watch_source = ->
 #=============================================================================
 set_sorrymode = (flag) ->
   return new Promise (resolve, reject) ->
-    sql = "REPLACE INTO preference (key, value) VALUES (?, ?);"
+    sql = "REPLACE INTO _syspref (key, value) VALUES (?, ?);"
     arr = ['sorrymode', flag]
     SYSTEMDB.all sql, arr, (err, res) ->
       resolve(0)
@@ -634,9 +654,11 @@ COMPILER = "#{NODE_MODULES}/.bin/terffee"
 COMPILER_DEV = "#{NODE_MODULES}/.bin/coffee"
 TERSER = "#{NODE_MODULES}/.bin/terser"
 DEPLOY_LENGTH = 4
-SYSTEMDB = new sqlite3.Database("#{MODULES_DIR}/libs/database/system.db")
+#SYSTEMDB = new sqlite3.Database("#{APPS_DIR}/libs/database/system.db")
 DEFAULTJSON = undefined
 DEVELOPJSON = undefined
+
+createKeyPair()
 
 system_check().then ->
   copy_stationary_file()
@@ -644,6 +666,7 @@ system_check().then ->
   DEFAULTJSON = require("#{APPS_DIR}/config/default.json")
   DEVELOPJSON = require("#{APPS_DIR}/config/develop.json")
   create_db()
+  SYSTEMDB = new sqlite3.Database("#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}")
 .then ->
   WATCH = 0
   CMD = 0
