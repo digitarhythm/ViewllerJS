@@ -1,6 +1,6 @@
 {
   "name": "viewller",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "View oriented single page application framework.",
   "main": "apps.min.js",
   "scripts": {},
@@ -26,6 +26,7 @@
     "chokidar": "^1.7.0",
     "coffeescript": "^2.3.1",
     "config": "^1.26.1",
+    "connect-sqlite3": "^0.9.11",
     "date-utils": "^1.2.21",
     "dateformat": "^3.0.3",
     "ect": "^0.5.9",
@@ -43,7 +44,6 @@
     "nodemailer": "^4.4.2",
     "path": "^0.12.7",
     "request": "^2.87.0",
-    "rfidconverter": "^0.2.4",
     "save": "^2.3.2",
     "sqlite3": "^4.0.6",
     "store": "^2.0.12",

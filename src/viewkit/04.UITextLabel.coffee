@@ -58,7 +58,6 @@ class UITextLabel extends UIView
   #=========================================================================
   setStyle:(key = undefined)->
     super(key)
-    echo "key=%@, x=%@, pageX3=%@", key, @frame.origin.x, @frame.origin.pageX
 
     if (key == "editable" || !@__textelement?)
       if (!@__changeEditable())
