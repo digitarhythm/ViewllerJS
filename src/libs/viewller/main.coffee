@@ -135,7 +135,7 @@ FWAPICALL = (param, func = undefined) ->
   file = node_pkg+"/api/"+param.file
   endpoint = param.endpoint
   headers = param.headers
-  data = JSON.stringify(param.data)
+  data = JSON.stringify(param.data) if (typeof param.data == 'object')
   url = "#{window.origin}/#{file}/#{endpoint}"
   $.ajaxSetup
     type    : type
