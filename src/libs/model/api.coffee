@@ -30,10 +30,11 @@ upload = multer({dest: "#{cwd}/apps/#{__jsdir}/public"})
 # send mail
 #==========================================================================
 router.post '/sendmail', (req, res)->
-  from = req.body.from || "postmaster"
-  to = req.body.to || undefined
-  subject = req.body.subject || "no subject"
-  message = req.body.message || "no message"
+  param = JSON.parser(req.body)
+  from = param.from || "postmaster"
+  to = param.to || undefined
+  subject = param.subject || "no subject"
+  message = param.message || "no message"
 
   if (!to?)
     res.json
@@ -109,7 +110,9 @@ router.post '/filelist', (req, res)->
           resolve(lists)
 
 	# application source file listing
-  dir = req.headers.path || ""
+  param = JSON.parse(req.body)
+  #dir = req.headers.path || ""
+  dir = param.path || ""
   path = "#{cwd}/apps/#{__jsdir}/public/#{dir}"
   readFileList(path).then (filelist)->
     res.json(filelist)
@@ -121,7 +124,9 @@ router.post '/filelist', (req, res)->
 # file upload
 #==========================================================================
 router.post '/file_upload', upload.any(), (req, res)->
-  dir = if (req.headers.dir != "") then req.headers.dir+"/" else ""
+  param = JSON.parse(req.body)
+  #dir = if (req.headers.dir != "") then req.headers.dir+"/" else ""
+  dir = if (param.dir != "") then param.dir+"/" else ""
   try
     filelist = []
     req.files.map (d) =>
@@ -140,7 +145,9 @@ router.post '/file_upload', upload.any(), (req, res)->
 # file unlink
 #==========================================================================
 router.post '/file_unlink', (req, res)->
-  file = req.headers.path
+  param = JSON.parse(req.body)
+  #file = req.headers.path
+  file = param.path
   if (file?)
     path = "#{cwd}/apps/#{__jsdir}/public/#{file}"
     try

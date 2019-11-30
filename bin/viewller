@@ -190,7 +190,7 @@ copy_stationary_file = ->
 #============================================================================
 create_db = =>
   return new Promise (resolve, reject) ->
-    #default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
+    default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
     develop_dbfile = "#{APPS_DIR}/develop/database/#{DEVELOPJSON.database.dbfile}"
 
     try
@@ -654,19 +654,22 @@ COMPILER = "#{NODE_MODULES}/.bin/terffee"
 COMPILER_DEV = "#{NODE_MODULES}/.bin/coffee"
 TERSER = "#{NODE_MODULES}/.bin/terser"
 DEPLOY_LENGTH = 4
-#SYSTEMDB = new sqlite3.Database("#{APPS_DIR}/libs/database/system.db")
 DEFAULTJSON = undefined
 DEVELOPJSON = undefined
 
-createKeyPair()
+public_path = "#{APPS_DIR}/config/public_key.pem"
+private_path = "#{APPS_DIR}/config/private_key.pem"
+if (!isExists(public_path)? || !isExists(private_path)? )
+  createKeyPair()
 
 system_check().then ->
   copy_stationary_file()
 .then ->
   DEFAULTJSON = require("#{APPS_DIR}/config/default.json")
   DEVELOPJSON = require("#{APPS_DIR}/config/develop.json")
-  create_db()
   SYSTEMDB = new sqlite3.Database("#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}")
+  console.log SYSTEMDB
+  create_db()
 .then ->
   WATCH = 0
   CMD = 0
