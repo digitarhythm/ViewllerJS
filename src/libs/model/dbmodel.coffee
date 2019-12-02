@@ -13,11 +13,13 @@ class dbmodel
     node_env = process.env.NODE_ENV
     if (node_env == "develop")
       __jsdir = "develop"
+      dbpath = "#{__apps}/apps/develop/database"
     else
       __jsdir = "production"
+      dbpath = "#{__apps}/apps/deploy/database"
 
-    @SCHEMA = require("#{__apps}/apps/#{__jsdir}/database/schema.json")
-    @DB = new sqlite3.Database("#{__apps}/apps/#{__jsdir}/database/#{config.database.dbfile}")
+    @SCHEMA = require("#{dbpath}/schema.json")
+    @DB = new sqlite3.Database("#{dbpath}/#{config.database.dbfile}")
 
 #============================================================================
 # public method

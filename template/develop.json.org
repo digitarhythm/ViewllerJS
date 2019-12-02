@@ -7,6 +7,5 @@
   },
   "database": {
     "dbfile": "application.dev.db",
-    "schema": "schema.dev.json"
   }
 }

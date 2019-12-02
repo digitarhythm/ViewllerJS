@@ -99,8 +99,13 @@ system_check = ->
     #=========================================================================
     # create deploy direcotry
     #=========================================================================
-    # create deploy directory(src)
+    # create deploy directory
     target = "#{APPS_DIR}/deploy"
+    if (!isExists(target)?)
+      fs.mkdirsSync(target)
+
+    # create production database directory
+    target = "#{APPS_DIR}/deploy/database"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -190,7 +195,7 @@ copy_stationary_file = ->
 #============================================================================
 create_db = =>
   return new Promise (resolve, reject) ->
-    default_dbfile = "#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}"
+    default_dbfile = "#{APPS_DIR}/deploy/database/#{DEFAULTJSON.database.dbfile}"
     develop_dbfile = "#{APPS_DIR}/develop/database/#{DEVELOPJSON.database.dbfile}"
 
     try
@@ -207,6 +212,7 @@ create_db = =>
 
     sql = "CREATE TABLE IF NOT EXISTS _syspref (key STRING UNIQUE PRIMARY KEY, value STRING);"
     try
+      SYSTEMDB = new sqlite3.Database(SYSTEMDB_PATH)
       SYSTEMDB.run(sql)
       resolve(0)
     catch e
@@ -337,7 +343,7 @@ deploy_application = ->
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
 
     # create database directory
-    target = "#{APPS_DIR}/production/database"
+    target = "#{APPS_DIR}/deploy/database"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -347,10 +353,15 @@ deploy_application = ->
       fs.mkdirsSync(target)
 
     # Copy develop db schema to production directory
-    target = "#{APPS_DIR}/production/database/schema.json"
+    target = "#{APPS_DIR}/deploy/database/schema.json"
     if (isExists(target)?)
       fs.removeSync(target)
-    fs.copySync("#{APPS_DIR}/develop/database/schema.json", target)
+    schema = "#{APPS_DIR}/develop/database/schema.json"
+    if (isExists(schema)?)
+      fs.copySync(schema, target)
+    else
+      console.log "ERROR: schema.json not found."
+      process.exit(-1)
 
     # Copy develop plugins directory to production directory
     target = "#{APPS_DIR}/production/plugins"
@@ -531,6 +542,7 @@ set_sorrymode = (flag) ->
   return new Promise (resolve, reject) ->
     sql = "REPLACE INTO _syspref (key, value) VALUES (?, ?);"
     arr = ['sorrymode', flag]
+    SYSTEMDB = new sqlite3.Database(SYSTEMDB_PATH)
     SYSTEMDB.all sql, arr, (err, res) ->
       resolve(0)
 
@@ -654,21 +666,25 @@ COMPILER = "#{NODE_MODULES}/.bin/terffee"
 COMPILER_DEV = "#{NODE_MODULES}/.bin/coffee"
 TERSER = "#{NODE_MODULES}/.bin/terser"
 DEPLOY_LENGTH = 4
-DEFAULTJSON = undefined
-DEVELOPJSON = undefined
 
+#=============================================================================
+# create key pair
+#=============================================================================
 public_path = "#{APPS_DIR}/config/public_key.pem"
 private_path = "#{APPS_DIR}/config/private_key.pem"
 if (!isExists(public_path)? || !isExists(private_path)? )
   createKeyPair()
+
+DEFAULTJSON = undefined
+DEVELOPJSON = undefined
+SYSTEMDB_PATH = undefined
 
 system_check().then ->
   copy_stationary_file()
 .then ->
   DEFAULTJSON = require("#{APPS_DIR}/config/default.json")
   DEVELOPJSON = require("#{APPS_DIR}/config/develop.json")
-  SYSTEMDB = new sqlite3.Database("#{APPS_DIR}/production/database/#{DEFAULTJSON.database.dbfile}")
-  console.log SYSTEMDB
+  SYSTEMDB_PATH = "#{APPS_DIR}/deploy/database/#{DEFAULTJSON.database.dbfile}"
   create_db()
 .then ->
   WATCH = 0

@@ -38,10 +38,12 @@ app.use("/#{pkgname}/sysplugins", express.static("#{__viewller}/libs/plugins"))
 
 if (node_env == "develop")
   __jsdir = "develop"
+  __dbpath = "#{__cwd}/apps/develop/database"
 else
   __jsdir = "production"
+  __dbpath = "#{__cwd}/apps/deploy/database"
 
-schema = require("#{__cwd}/apps/#{__jsdir}/database/schema.json")
+schema = require("#{__dbpath}/schema.json")
 
 app.use("/#{pkgname}/plugins", express.static("#{__cwd}/apps/#{__jsdir}/plugins"))
 app.use("/#{pkgname}/public", express.static("#{__cwd}/apps/#{__jsdir}/public"))
@@ -71,6 +73,23 @@ __decrypt = (str) ->
 #============================================================================
 __isDir = (filepath) ->
   return fs.existsSync(filepath) && fs.statSync(filepath).isDirectory()
+
+#==========================================================================
+# rendering ect template
+#==========================================================================
+__rendering_page = (res, viewpath, page) ->
+  app.set("views", viewpath)
+  ectRenderer = ECT({ watch: true, root: viewpath, ext : ".ect" })
+  app.engine("ect", ectRenderer.render)
+  app.set("view engine", "ect")
+
+  res.render page,
+    syspluginlist: syspluginlist
+    pluginlist: pluginlist
+    sourcefilelist: sourcefilelist
+    stylesheet: stylesheet
+    node_env:node_env
+    pkgname: pkgname
 
 #==========================================================================
 # database setup
@@ -240,33 +259,28 @@ app.get "/", (req, res) ->
       return 1
 
   .then ->
-    SYSTEMDB = new sqlite3.Database("#{__viewller}/libs/database/system.db")
-    sql = "SELECT value FROM preference WHERE key='sorrymode';"
-    SYSTEMDB.all sql, [], (err, rows) ->
-      if (rows.length == 0)
-        sorry = 1
-      else
-        sorry = rows[0].value
+    if (node_env == "develop")
+      viewpath = path.join(__viewller, "/template")
+      page = "main"
+      __rendering_page(res, viewpath, page)
+    else
+      systemdb_path = "#{__dbpath}/#{config.database.dbfile}"
+      sql = "SELECT value FROM _syspref WHERE key='sorrymode';"
+      SYSTEMDB = new sqlite3.Database(systemdb_path)
+      SYSTEMDB.all sql, [], (err, rows) ->
+        if (rows.length == 0)
+          sorry = 1
+        else
+          sorry = rows[0].value
 
-      if (sorry == 0 || __jsdir == "develop")
-        app.set("views", path.join(__viewller, "/template"))
-        ectRenderer = ECT({ watch: true, root: __viewller+"/template", ext : ".ect" })
-        app.engine("ect", ectRenderer.render)
-        app.set("view engine", "ect")
-        page = "main"
-      else if (sorry == 1)
-        app.set("views", path.join(__cwd, "/apps/src/template"))
-        ectRenderer = ECT({ watch: true, root: __cwd+"/apps/src/template", ext : ".ect" })
-        app.engine("ect", ectRenderer.render)
-        app.set("view engine", "ect")
-        page = "sorrymode"
-      res.render page,
-        syspluginlist: syspluginlist
-        pluginlist: pluginlist
-        sourcefilelist: sourcefilelist
-        stylesheet: stylesheet
-        node_env:node_env
-        pkgname: pkgname
+        if (sorry == 0)
+          viewpath = path.join(__viewller, "/template")
+          page = "main"
+        else if (sorry == 1)
+          viewpath = path.join(__cwd, "/apps/src/template")
+          page = "sorrymode"
+
+        __rendering_page(res, viewpath, page)
 
 
 #============================================================================
