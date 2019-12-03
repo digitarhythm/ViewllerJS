@@ -244,7 +244,7 @@ compile_all = (node_env = "develop")->
   else
     console.log("viewkit compiling for production.")
     console.log("user view scripts compiling...")
-    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/viewller -c #{APPS_DIR}/src/viewller/*.coffee").toString()
+    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/viewller/viewller.js -c #{APPS_DIR}/src/viewller").toString()
     console.log(ret) if (ret != "")
 
     console.log("user model/controller scripts compiling...")
@@ -270,6 +270,10 @@ start_production = (restart = false) ->
   port = DEFAULTJSON.network.port
   env = Object.create(process.env)
   env.NODE_ENV = ""
+
+  target = "#{APPS_DIR}/deploy/database/schema.json"
+  if (!isExists(target)?)
+    fs.copySync("#{APPS_DIR}/develop/database/schema.json", target)
 
   if (restart)
     spawn "forever", ["restart", CWD], {env: env}
