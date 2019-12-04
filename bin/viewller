@@ -417,23 +417,24 @@ listup_rollback = ->
   fs.readdir path, (err, lists) ->
     filelist = []
     console.log("Rollback environment list")
-    lists.map (d, i) ->
-      idx = ("0".repeat(DEPLOY_LENGTH)+(i+1)).slice(-DEPLOY_LENGTH)
-      fname = "#{path}/#{d}"
-      fs.stat fname, (err, stats) ->
-        today = new Date(stats.mtimeMs)
-        year = ("0".repeat(4)+today.getFullYear()).slice(-4)
-        month = ("0".repeat(2)+(today.getMonth()+1)).slice(-2)
-        day = ("0".repeat(2)+today.getDate()).slice(-2)
-        hour = ("0".repeat(2)+today.getHours()).slice(-2)
-        minute = ("0".repeat(2)+today.getMinutes()).slice(-2)
-        second = ("0".repeat(2)+today.getSeconds()).slice(-2)
-        datestr = "#{year}.#{month}.#{day} #{hour}:#{minute}:#{second}"
-        if (d == curr)
-          currpos = " <<< "
-        else
-          currpos = ""
-        console.log "#{idx}: Date:#{datestr}#{currpos}"
+    lists.forEach (d, i) ->
+      if (d.match(/^[0-9]*$/))
+        idx = ("0".repeat(DEPLOY_LENGTH)+(i+1)).slice(-DEPLOY_LENGTH)
+        fname = "#{path}/#{d}"
+        fs.stat fname, (err, stats) ->
+          today = new Date(stats.mtimeMs)
+          year = ("0".repeat(4)+today.getFullYear()).slice(-4)
+          month = ("0".repeat(2)+(today.getMonth()+1)).slice(-2)
+          day = ("0".repeat(2)+today.getDate()).slice(-2)
+          hour = ("0".repeat(2)+today.getHours()).slice(-2)
+          minute = ("0".repeat(2)+today.getMinutes()).slice(-2)
+          second = ("0".repeat(2)+today.getSeconds()).slice(-2)
+          datestr = "#{year}.#{month}.#{day} #{hour}:#{minute}:#{second}"
+          if (d == curr)
+            currpos = " <<< "
+          else
+            currpos = ""
+          console.log "#{idx}: Date:#{datestr}#{currpos}"
 
 
 #============================================================================
