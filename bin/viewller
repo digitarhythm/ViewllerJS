@@ -659,6 +659,16 @@ argv.option
   description: "rollback production application."
   example: "'viewller -r' or 'viewller --rollback'"
 
+#=============================================================================
+# display version
+#=============================================================================
+argv.option
+  name: "version"
+  short: "v"
+  type: "string"
+  description: "display viewller version."
+  example: "'viewller -v' or 'viewller --version'"
+
 OPT = argv.run()
 env = Object.create(process.env)
 NODE_ENV = env.NODE_ENV
@@ -719,6 +729,8 @@ system_check().then ->
         CMD = 9
       when "list"
         CMD = 10
+      when "version"
+        CMD = 11
 
   if (CMD == 0 && WATCH == 0)
     argv.run(["-h"])
@@ -817,6 +829,14 @@ system_check().then ->
     when 10
       err = 10
       listup_rollback()
+
+    #==========================================================================
+    # display version
+    #==========================================================================
+    when 11
+      config = require "#{MODULES_DIR}/package.json"
+      version = config.version
+      console.log "ViewllerJS - version #{version}"
 
     #==========================================================================
     # etc
