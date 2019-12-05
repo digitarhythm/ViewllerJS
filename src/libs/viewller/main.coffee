@@ -230,11 +230,7 @@ $ ->
   main.borderWidth = 0.0
   main.containment = true
   main.clipToBounds = true
-  main.__setBackgroundColor
-    red: 255
-    green: 255
-    blue: 255
-    alpha: 1.0
+  main.backgroundColor = FWColor(255, 255, 255, 1.0)
   main.__setFrame(frm)
   timer = false
   window.onresize = ->

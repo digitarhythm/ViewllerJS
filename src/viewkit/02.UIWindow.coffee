@@ -49,20 +49,20 @@ class UIWindow extends FWObject
       frame: frame
       alpha: 1.0
       cornerRadius: 0.0
-      borderWidth: 0.0
+      borderWidth: 1.0
       containment: false
       clipToBounds: false
       userInteractionEnabled: true
       backgroundColor:
-        red: 255
-        green: 255
-        blue: 255
+        red: 250
+        green: 250
+        blue: 250
         alpha: 1.0
       borderColor:
-        red: 0
-        green: 0
-        blue: 0
-        alpha: 0.0
+        red: 200
+        green: 200
+        blue: 200
+        alpha: 1.0
       shadowParam:
         x: 2
         y: 2

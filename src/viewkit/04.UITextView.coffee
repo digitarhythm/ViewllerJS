@@ -6,10 +6,7 @@ class UITextView extends UIView
   constructor:(param)->
     super(param)
     # default parameter
-    @borderColor = FWColor(255, 255, 255, 0.0)
-    @borderWidth = 1.0
     @clipToBounds = true
-    @backgroundColor = FWColor(255, 255, 255, 1.0)
     @scrolling = true
 
     # additional parameter

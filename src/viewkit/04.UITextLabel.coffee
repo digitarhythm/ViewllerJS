@@ -6,11 +6,9 @@ class UITextLabel extends UIView
   constructor:(param)->
     super(param)
 
-    @borderColor = FWColor(0, 0, 0, 0.0)
-    @borderWidth = 0.0
+    # default parameter
     @clipToBounds = true
     @cornerRadius = 4.0
-    @backgroundColor = FWColor(255, 255, 255, 1.0)
 
     @__style.textAlign = "UITextAlignmentLeft"
     @__style.verticalAlign = "UITextVerticalAlignmentMiddle"
