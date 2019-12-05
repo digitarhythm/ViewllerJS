@@ -6,6 +6,6 @@
     "ssl_cert": ""
   },
   "database": {
-    "dbfile": "application.dev.db",
+    "dbfile": "application.dev.db"
   }
 }
