@@ -54,9 +54,9 @@ class UIWindow extends FWObject
       clipToBounds: false
       userInteractionEnabled: true
       backgroundColor:
-        red: 200
-        green: 200
-        blue: 200
+        red: 255
+        green: 255
+        blue: 255
         alpha: 1.0
       borderColor:
         red: 0
