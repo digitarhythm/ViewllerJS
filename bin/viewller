@@ -117,8 +117,8 @@ system_check = ->
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
-    # create viewller directory(src)
-    target = "#{APPS_DIR}/src/viewller"
+    # create view directory(src)
+    target = "#{APPS_DIR}/src/view"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -141,7 +141,7 @@ system_check = ->
       fs.mkdirsSync(target)
 
     # create viewller js directory(develop)
-    target = "#{APPS_DIR}/develop/js/viewller"
+    target = "#{APPS_DIR}/develop/js/view"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -179,7 +179,7 @@ copy_stationary_file = ->
       {"from": "#{MODULES_DIR}/template/default.json.org", "to": "#{APPS_DIR}/config/default.json"}
       {"from": "#{MODULES_DIR}/template/develop.json.org", "to": "#{APPS_DIR}/config/develop.json"}
       {"from": "#{MODULES_DIR}/template/application.json.org", "to": "#{APPS_DIR}/config/application.json"}
-      {"from": "#{MODULES_DIR}/template/applicationMain.coffee.org", "to": "#{APPS_DIR}/src/viewller/applicationMain.coffee"}
+      {"from": "#{MODULES_DIR}/template/applicationMain.coffee.org", "to": "#{APPS_DIR}/src/view/applicationMain.coffee"}
       {"from": "#{MODULES_DIR}/template/sampleapi.coffee.org", "to": "#{APPS_DIR}/src/model/sampleapi.coffee"}
       {"from": "#{MODULES_DIR}/template/sorrymode.ect", "to": "#{APPS_DIR}/src/template/sorrymode.ect"}
       {"from": "#{MODULES_DIR}/template/schema.json.org", "to": "#{APPS_DIR}/develop/database/schema.json"}
@@ -229,7 +229,7 @@ compile_all = (node_env = "develop")->
   if (node_env == "develop")
     console.log("viewkit compiling for develop.")
     console.log("user view scripts compiling...")
-    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/viewller -c #{APPS_DIR}/src/viewller/*.coffee").toString()
+    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/view -c #{APPS_DIR}/src/view/*.coffee").toString()
     console.log(ret) if (ret != "")
 
     console.log("user model/controller scripts compiling...")
@@ -244,7 +244,7 @@ compile_all = (node_env = "develop")->
   else
     console.log("viewkit compiling for production.")
     console.log("user view scripts compiling...")
-    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/viewller/viewller.js -c #{APPS_DIR}/src/viewller").toString()
+    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/view/viewller.js -c #{APPS_DIR}/src/view").toString()
     console.log(ret) if (ret != "")
 
     console.log("user model/controller scripts compiling...")
@@ -339,7 +339,7 @@ deploy_application = ->
       fs.unlinkSync(target)
     fs.symlinkSync("./#{fpath}", target)
 
-    dir = "#{fpath}/js/viewller"
+    dir = "#{fpath}/js/view"
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
     dir = "#{fpath}/js/model"
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
@@ -449,7 +449,7 @@ stop_production = ->
 #============================================================================
 createclass = (TARGET, CLASSNAME) ->
   return new Promise (resolve, reject) ->
-    newclasspath = "#{APPS_DIR}/src/viewller/#{TARGET}.coffee"
+    newclasspath = "#{APPS_DIR}/src/view/#{TARGET}.coffee"
     if (isExists(newclasspath)?)
       message = "Class File Exists."
       err = -3
@@ -538,7 +538,7 @@ __search_class_fname = (classname, filelists)->
 #=============================================================================
 watch_source = ->
   env = Object.create(process.env)
-  spawn COMPILER, ["-m", "-w", "-c", "#{APPS_DIR}/src/viewller", "-o", "#{APPS_DIR}/develop/js/viewller/", "-c", "#{APPS_DIR}/src/model", "-o", "#{APPS_DIR}/develop/js/model/"], {env: env, stdio: "inherit"}
+  spawn COMPILER, ["-m", "-w", "-c", "#{APPS_DIR}/src/view", "-o", "#{APPS_DIR}/develop/js/view/", "-c", "#{APPS_DIR}/src/model", "-o", "#{APPS_DIR}/develop/js/model/"], {env: env, stdio: "inherit"}
 
 #=============================================================================
 # set sorry mode

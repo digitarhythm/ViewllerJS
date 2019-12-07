@@ -33,7 +33,7 @@ __cwd = fs.realpathSync(process.cwd())
 
 app.use(bodyParser.json())
 app.use("/#{pkgname}/sysimages", express.static("#{__viewller}/libs/images"))
-app.use("/#{pkgname}/sysviews", express.static("#{__viewller}/libs/viewller"))
+app.use("/#{pkgname}/sysviews", express.static("#{__viewller}/libs/view"))
 app.use("/#{pkgname}/sysplugins", express.static("#{__viewller}/libs/plugins"))
 
 if (node_env == "develop")
@@ -48,7 +48,7 @@ schema = require("#{__dbpath}/schema.json")
 app.use("/#{pkgname}/plugins", express.static("#{__cwd}/apps/#{__jsdir}/plugins"))
 app.use("/#{pkgname}/public", express.static("#{__cwd}/apps/#{__jsdir}/public"))
 app.use("/#{pkgname}/library", express.static("#{__cwd}/apps/#{__jsdir}/library"))
-app.use("/#{pkgname}/viewller", express.static("#{__cwd}/apps/#{__jsdir}/js/viewller"))
+app.use("/#{pkgname}/view", express.static("#{__cwd}/apps/#{__jsdir}/js/view"))
 
 #============================================================================
 # load system module
@@ -251,11 +251,11 @@ app.get "/", (req, res) ->
 
   # ビューコード読み込み
   .then (ret) ->
-    readFileList("#{__cwd}/apps/#{__jsdir}/js/viewller").then (lists) ->
+    readFileList("#{__cwd}/apps/#{__jsdir}/js/view").then (lists) ->
       sourcefilelist = []
       for fname in lists
         if (fname.match(/^.*\.js$/) && !fname.match(/^\./))
-          sourcefilelist.push("viewller/#{fname}")
+          sourcefilelist.push("view/#{fname}")
       return 1
 
   .then ->
