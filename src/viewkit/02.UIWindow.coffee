@@ -472,7 +472,7 @@ class UIWindow extends FWObject
       return
 
     $(@__viewSelector).bind
-      'touchstart mousedown':(event)=>
+      'mousedown':(event)=>
         if (!event? || !@userInteractionEnabled)
           return
 
@@ -491,7 +491,7 @@ class UIWindow extends FWObject
         if (typeof @touchesBegan == 'function')
           @touchesBegan(pos, e)
 
-      'touchmove mousemove':(event)=>
+      'mousemove':(event)=>
         if (!event? || !@userInteractionEnabled)
           return
 
@@ -516,7 +516,7 @@ class UIWindow extends FWObject
         if (typeof @touchesMoved == 'function')
           @touchesMoved(pos, e)
 
-      'touchend mouseup':(event)=>
+      'mouseup':(event)=>
         if (!@__touched || !event? || !@userInteractionEnabled)
           return
 
@@ -534,7 +534,7 @@ class UIWindow extends FWObject
         if (typeof @touchesEnded == 'function')
           @touchesEnded(pos, e)
 
-      'touchcancel mouseleave':(event)=>
+      'mouseleave':(event)=>
         if (!@__touched || !event? || !@userInteractionEnabled)
           return
 
