@@ -6,5 +6,5 @@ COMPILER="../terffee/terffee"
 # compile all scripts
 #============================================================================
 echo "viewkit compiling..."
-${COMPILER} -c ./src/viewkit -o ./libs/view/viewkit.min.js -c ./src/libs/view -o ./libs/view/mainview.min.js -c ./src/libs/model -o ./libs/model/
-${COMPILER} -w -c ./src/viewkit -o ./libs/view/viewkit.min.js -c ./src/libs/view -o ./libs/view/mainview.min.js -c ./src/libs/model -o ./libs/model/
+${COMPILER} -c ./src/viewkit -o ./libs/frontend/viewkit.min.js -c ./src/libs/frontend -o ./libs/frontend/mainview.min.js -c ./src/libs/backend -o ./libs/backend/
+${COMPILER} -w -c ./src/viewkit -o ./libs/frontend/viewkit.min.js -c ./src/libs/frontend -o ./libs/frontend/mainview.min.js -c ./src/libs/backend -o ./libs/backend/
