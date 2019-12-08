@@ -284,7 +284,7 @@ class UITextView extends UIView
     @__textelement.setAttribute("id", @UniqueID+"_text")
 
     @__frameelement.appendChild(@__textelement)
-    @__addelement = @__textelement
+    #@__addelement = @__textelement
 
     #--------------------------------------------------------------------------
     # エレメント設定
@@ -344,7 +344,7 @@ class UITextView extends UIView
     @__textelement.style.top = "0px"
     @__textelement.style.width = "#{framewidth-diff}px"
     @__textelement.style.height = "#{frameheight-diff}px"
-    @__textelement.style.backgroundColor = CSSRGBA(FWColor(0, 0, 255, 0.0))
+    @__textelement.style.backgroundColor = CSSRGBA(FWColor(255, 255, 255, 0.0))
 
   #=========================================================================
   # text data update
