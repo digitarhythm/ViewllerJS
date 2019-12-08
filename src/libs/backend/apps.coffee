@@ -33,7 +33,7 @@ __cwd = fs.realpathSync(process.cwd())
 
 app.use(bodyParser.json())
 app.use("/#{pkgname}/sysimages", express.static("#{__viewller}/libs/images"))
-app.use("/#{pkgname}/sysviews", express.static("#{__viewller}/libs/view"))
+app.use("/#{pkgname}/sysviews", express.static("#{__viewller}/libs/frontend"))
 app.use("/#{pkgname}/sysplugins", express.static("#{__viewller}/libs/plugins"))
 
 if (node_env == "develop")
@@ -48,13 +48,13 @@ schema = require("#{__dbpath}/schema.json")
 app.use("/#{pkgname}/plugins", express.static("#{__cwd}/apps/#{__jsdir}/plugins"))
 app.use("/#{pkgname}/public", express.static("#{__cwd}/apps/#{__jsdir}/public"))
 app.use("/#{pkgname}/library", express.static("#{__cwd}/apps/#{__jsdir}/library"))
-app.use("/#{pkgname}/view", express.static("#{__cwd}/apps/#{__jsdir}/js/view"))
+app.use("/#{pkgname}/view", express.static("#{__cwd}/apps/#{__jsdir}/js/frontend"))
 
 #============================================================================
 # load system module
 #============================================================================
 global.FWREQUIRE = (module)->
-  modulepath = "#{process.cwd()}/node_modules/viewller/libs/model/#{module}.min"
+  modulepath = "#{process.cwd()}/node_modules/viewller/libs/backend/#{module}.min"
   mod = require(modulepath)
   return mod
 
@@ -181,21 +181,21 @@ api = require("./api.min")
 app.use("/#{pkgname}/api", api)
 
 # システムモジュール読み込み
-readFileList("#{__viewller}/libs/model").then (lists) ->
+readFileList("#{__viewller}/libs/backend").then (lists) ->
   for fname in lists
     if (fname.match(/^.*\.js$/) && !fname.match(/^\./))
       apiorg = path.basename(fname).replace(/\.min\.js/, "")
-      model[apiorg] = require("#{__viewller}/libs/model/#{apiorg}.min")
+      model[apiorg] = require("#{__viewller}/libs/backend/#{apiorg}.min")
   return 1
 
 # ユーザーAPI読み込み
 .then (ret) ->
-  readFileList("#{__cwd}/apps/#{__jsdir}/js/model").then (lists) ->
+  readFileList("#{__cwd}/apps/#{__jsdir}/js/backend").then (lists) ->
     for fname in lists
       if (fname.match(/^.*\.js$/) && !fname.match(/^\./) && !fname.match(/^apps/))
         apiorg = path.basename(fname).match(/(.*?)\./, "$1")[1]
         try
-          apifname = "#{__cwd}/apps/#{__jsdir}/js/model/#{apiorg}"
+          apifname = "#{__cwd}/apps/#{__jsdir}/js/backend/#{apiorg}"
           model[apiorg] = require(apifname)
           app.use("/#{pkgname}/api/#{apiorg}", model[apiorg])
         #catch e
@@ -251,7 +251,7 @@ app.get "/", (req, res) ->
 
   # ビューコード読み込み
   .then (ret) ->
-    readFileList("#{__cwd}/apps/#{__jsdir}/js/view").then (lists) ->
+    readFileList("#{__cwd}/apps/#{__jsdir}/js/frontend").then (lists) ->
       sourcefilelist = []
       for fname in lists
         if (fname.match(/^.*\.js$/) && !fname.match(/^\./))
