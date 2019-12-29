@@ -119,7 +119,6 @@ class dbmodel
 
       if (orderby?)
         sql += orderby
-        #arr.push(orderby)
         if (sort?)
           sql += " #{sort}"
 

@@ -1,6 +1,6 @@
 .git
 package-lock.json
-libs/model/*.js
-libs/viewller/*.js
+libs/backend/*.js
+libs/frontend/*.js
 libs/database/*
 !libs/database/.gitkeep

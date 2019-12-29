@@ -18,6 +18,9 @@
       node_env = "<%= @node_env %>";
       node_origin = window.origin+"/<%= @pkgname %>";
     </script>
+    <% for f, i in @cdnlist : %>
+      <script type="text/javascript" id="cdn_<%= i %>" src="<%= f %>"></script>
+    <% end %>
     <script type="text/javascript" src="<%= @pkgname %>/sysviews/mainview.min.js"></script>
     <script type="text/javascript" src="<%= @pkgname %>/sysviews/viewkit.min.js"></script>
     <% for f in @syspluginlist : %>
@@ -27,7 +30,7 @@
       <script type="text/javascript" src="<%= @pkgname %>/<%= f %>"></script>
     <% end %>
     <% for f, i in @sourcefilelist : %>
-      <script type="text/javascript" id="<%= i %>" src="<%= @pkgname %>/<%= f %>"></script>
+      <script type="text/javascript" id="src_<%= i %>" src="<%= @pkgname %>/<%= f %>"></script>
     <% end %>
   </head>
   <body style="margin: 0px 0px 0px 0px;">

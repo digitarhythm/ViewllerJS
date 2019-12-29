@@ -86,6 +86,7 @@ __rendering_page = (res, viewpath, page) ->
   res.render page,
     syspluginlist: syspluginlist
     pluginlist: pluginlist
+    cdnlist: cdnlist
     sourcefilelist: sourcefilelist
     stylesheet: stylesheet
     node_env:node_env
@@ -175,6 +176,7 @@ syspluginlist = []
 pluginlist = []
 stylesheet = []
 sourcefilelist = []
+cdnlist = []
 
 # システムAPI読み込み
 api = require("./api.min")
@@ -217,7 +219,7 @@ stylesheet = ["sysplugins/.highlight_style/#{style.highlight}.css"]
 app.get "/", (req, res) ->
   # システムCSSファイル読み込み
   readFileList("#{__viewller}/libs/plugins").then (lists) ->
-    #stylesheet = []
+    stylesheet = []
     for fname in lists
       if (fname.match(/^.*\.css$/) && !fname.match(/^\./))
         stylesheet.push("sysplugins/#{fname}")
@@ -248,6 +250,14 @@ app.get "/", (req, res) ->
         if (fname.match(/.*\.js$/) && !fname.match(/^\./))
           pluginlist.push("plugins/#{fname}")
       return 1
+
+  # CDN読み込み
+  .then (ret) ->
+    cdn = require("#{__cwd}/apps/config/cdn.json")
+    cdnlist = []
+    for uri in cdn
+      cdnlist.push(cdn)
+    return 1
 
   # ビューコード読み込み
   .then (ret) ->
