@@ -36,10 +36,10 @@ class UIWebView extends UIView
   viewWillDisappear:->
     super()
 
-  setStyle:(param)->
-    super(param)
+  setStyle:(key)->
+    super(key)
 
-    if (@__checkParameterKey(param, ["src"]))
+    if (key == "src")
       @__webelement.setAttribute("src", @src) if (@__webelement?)
 
     @__webelement.style.display = if (@hidden) then "none" else "table-cell"
