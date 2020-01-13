@@ -1,6 +1,6 @@
 {
   "name": "viewller",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "View oriented single page application framework.",
   "main": "apps.min.js",
   "scripts": {},
