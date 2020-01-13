@@ -38,9 +38,11 @@ class UIWebView extends UIView
 
   setStyle:(key)->
     super(key)
+    if (!@__webelement?)
+      return
 
     if (key == "src")
-      @__webelement.setAttribute("src", @src) if (@__webelement?)
+      @__webelement.setAttribute("src", @src)
 
     @__webelement.style.display = if (@hidden) then "none" else "table-cell"
     @__webelement.style.user-select = "none"
