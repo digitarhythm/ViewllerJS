@@ -41,8 +41,8 @@ class FWApplication
   # get browser size(include scrolling bar)
   #=========================================================================
   @getBounds = ->
-    width = window.innerWidth
-    height = window.innerHeight - 0.5
+    width = document.documentElement.clientWidth - 2
+    height = document.documentElement.clientHeight - 2
     frame = FWRectMake(0, 0, width, height)
     return frame
 
