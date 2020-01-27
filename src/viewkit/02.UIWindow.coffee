@@ -43,6 +43,7 @@ class UIWindow extends FWObject
     # たメソッドが変更された場合の、見映えへの反映コードを記述します。
     @__style =
       shadow: false
+      shadowStyle: 'box'
       resizable: false
       draggable: false
       hidden: false
@@ -254,7 +255,10 @@ class UIWindow extends FWObject
       @shadowParam.color = color
 
       shadowstyle = "#{x}px #{y}px #{width}px rgba(#{color.red}, #{color.green}, #{color.blue}, #{color.alpha})"
-      @__element.style.boxShadow = shadowstyle
+      if (@shadowStyle == "box")
+        @__element.style.boxShadow = shadowstyle
+      else if (@shadowStyle == "drop")
+        @__element.style.drop-shadow = shadowstyle
 
     else
       @__element.style.boxShadow = "none"
