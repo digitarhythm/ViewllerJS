@@ -1,6 +1,6 @@
 {
   "network": {
-    "port": 5001,
+    "port": ###port###,
     "protocol": "http",
     "ssl_key": "",
     "ssl_cert": ""

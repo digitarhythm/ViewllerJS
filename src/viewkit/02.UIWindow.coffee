@@ -257,11 +257,14 @@ class UIWindow extends FWObject
       shadowstyle = "#{x}px #{y}px #{width}px rgba(#{color.red}, #{color.green}, #{color.blue}, #{color.alpha})"
       if (@shadowStyle == "box")
         @__element.style.boxShadow = shadowstyle
+        @__element.style.filter = "none"
       else if (@shadowStyle == "drop")
-        @__element.style.drop-shadow = shadowstyle
+        @__element.style.boxShadow = "none"
+        @__element.style.dropShadow = "drop-shadow('#{shadowstyle}')"
 
     else
       @__element.style.boxShadow = "none"
+      @__element.style.filter = "none"
 
   #===========================================================================
   # add sub view

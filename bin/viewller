@@ -172,12 +172,15 @@ system_check = ->
       else
         resolve(0)
 
+#=============================================================================
+# copy stationary file
+#=============================================================================
 copy_stationary_file = ->
   return new Promise (resolve, reject) ->
     # copy stationary file
     filelist = [
-      {"from": "#{MODULES_DIR}/template/default.json.org", "to": "#{APPS_DIR}/config/default.json"}
-      {"from": "#{MODULES_DIR}/template/develop.json.org", "to": "#{APPS_DIR}/config/develop.json"}
+      #{"from": "#{MODULES_DIR}/template/default.json.org", "to": "#{APPS_DIR}/config/default.json"}
+      #{"from": "#{MODULES_DIR}/template/develop.json.org", "to": "#{APPS_DIR}/config/develop.json"}
       {"from": "#{MODULES_DIR}/template/application.json.org", "to": "#{APPS_DIR}/config/application.json"}
       {"from": "#{MODULES_DIR}/template/cdn.json.org", "to": "#{APPS_DIR}/config/cdn.json"}
       {"from": "#{MODULES_DIR}/template/applicationMain.coffee.org", "to": "#{APPS_DIR}/src/frontend/applicationMain.coffee"}
@@ -191,10 +194,39 @@ copy_stationary_file = ->
       else
         resolve(0)
 
+    freeport = get_free_port(5000, 2)
+    if (freeport.length < 2)
+      console.log("Not enough free ports(5000~).")
+      process.exit(-1)
+
+    defport = freeport[0]
+    devport = freeport[1]
+    console.log("defport="+defport+", devport="+devport)
+    execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{defport}/' > #{APPS_DIR}/config/default.json")
+    execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{devport}/' > #{APPS_DIR}/config/develop.json")
+
+#=============================================================================
+# get number of free port
+#=============================================================================
+get_free_port = (start, num=1) ->
+  port = execSync("netstat -an | grep 'LISTEN ' | awk '{print $4}' | grep '^:::' | sed -e 's/::://' | sort -n").toString().trim()
+  portlist = port.split("\n")
+  freeport = []
+  portlist.forEach (p, idx) ->
+    portlist[idx] = parseInt(p)
+  for i in [parseInt(start)...(parseInt(start)+1000)]
+    if (portlist.indexOf(i) < 0)
+      freeport.push(i)
+      if (freeport.length == num)
+        break
+      else
+        portlist.push(i)
+  return freeport
+
 #============================================================================
 # create system database
 #============================================================================
-create_db = =>
+create_db = ->
   return new Promise (resolve, reject) ->
     default_dbfile = "#{APPS_DIR}/deploy/database/#{DEFAULTJSON.database.dbfile}"
     develop_dbfile = "#{APPS_DIR}/develop/database/#{DEVELOPJSON.database.dbfile}"
