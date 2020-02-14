@@ -207,8 +207,7 @@ copy_stationary_file = ->
 # get number of free port
 #=============================================================================
 get_free_port = (start, num=1) ->
-  port = execSync("sudo -i /usr/sbin/netstat -an | grep 'LISTEN ' | awk '{print $4}' | grep '^:::' | sed -e 's/::://' | sort -n").toString().trim()
-  #port = execSync("ss -nlt | awk '{print $4}' | grep '\*:.*' | awk -F':' '{print$2}'").toString().trim()
+  port = execSync("sudo -i netstat -an | grep 'LISTEN ' | awk 'match($4, /[\:\.][0-9]*$/) {print substr($4, RSTART+1, RLENGTH)}' | sort -nu").toString().trim()
   portlist = port.split("\n")
   freeport = []
   portlist.forEach (p, idx) ->
