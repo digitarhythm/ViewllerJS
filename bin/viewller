@@ -199,7 +199,6 @@ copy_stationary_file = ->
 
     defport = freeport[0]
     devport = freeport[1]
-    console.log("defport="+defport+", devport="+devport)
     execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{defport}/' > #{APPS_DIR}/config/default.json")
     execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{devport}/' > #{APPS_DIR}/config/develop.json")
 
