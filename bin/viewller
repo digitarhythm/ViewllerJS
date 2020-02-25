@@ -177,6 +177,9 @@ system_check = ->
 #=============================================================================
 copy_stationary_file = ->
   return new Promise (resolve, reject) ->
+    # set free port to config file
+    setup_freeport()
+
     # copy stationary file
     filelist = [
       {"from": "#{MODULES_DIR}/template/application.json.org", "to": "#{APPS_DIR}/config/application.json"}
@@ -192,15 +195,18 @@ copy_stationary_file = ->
       else
         resolve(0)
 
+setup_freeport = ->
+  return new Promise (resolve, reject) ->
     freeport = get_free_port(5000, 2)
     if (freeport.length < 2)
       console.log("Not enough free ports(5000~).")
-      process.exit(-1)
-
-    defport = freeport[0]
-    devport = freeport[1]
-    execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{defport}/' > #{APPS_DIR}/config/default.json")
-    execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{devport}/' > #{APPS_DIR}/config/develop.json")
+      reject(-1)
+    else
+      defport = freeport[0]
+      devport = freeport[1]
+      execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{defport}/' > #{APPS_DIR}/config/default.json")
+      execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{devport}/' > #{APPS_DIR}/config/develop.json")
+      resolve(0)
 
 #=============================================================================
 # get number of free port
@@ -315,7 +321,19 @@ start_production = (restart = false) ->
 
     try
       fs.statSync(logpath)
-      spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-a", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/backend/apps.min.js"], {env: env}
+      spawn "forever", [
+        "start"
+        "--uid"
+        CWD
+        "-p"
+        CWD
+        "--pidFile"
+        "process.pid"
+        "-a"
+        "-l"
+        "#{APPS_DIR}/production/logs/viewller#{now}.log"
+        "./node_modules/viewller/libs/backend/apps.min.js"
+      ], {env: env}
     catch e
       spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/backend/apps.min.js"], {env: env}
 
@@ -801,10 +819,13 @@ system_check().then ->
     #==========================================================================
     when 3
       err = 3
-      if (isExists("#{APPS_DIR}/production")?)
+      if (!isExists("#{APPS_DIR}/production")?)
+        deploy_application()
+      else
+        console.log "stop production"
         stop_production()
-        console.log "start production"
-        start_production()
+      console.log "start production"
+      start_production()
       start_development()
 
     #==========================================================================
