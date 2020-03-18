@@ -33,6 +33,34 @@ class UIWindow extends FWObject
     @__pageorigin =
       x: frame.origin.x
       y: frame.origin.y
+    @constraints =
+      isActive: false
+      position:
+        left: undefined
+        top: undefined
+        right: undefined
+        bottom: undefined
+      space:
+        leading:
+          target: undefined
+          constant: undefined
+        trailing:
+          target: undefined
+          constant: undefined
+        top:
+          target: undefined
+          constant: undefined
+        bottom:
+          target: undefined
+          constant: undefined
+      aspect: undefined
+      center:
+        horizontal: undefined
+        vertical: undefined
+      equal:
+        width: undefined
+        height: undefined
+
 
     # style values
     # ここに登録してあるパラーメータはメンバー変数として登録されます。
@@ -123,6 +151,7 @@ class UIWindow extends FWObject
             @__styleUpdateFlag = styleUpdateBackup
           return value
         set: (v) =>
+          echo "descript key=%@", key
           value = v
           if (typeof(v) == 'object' && !Array.isArray(v))
             @setObserve(v, obj[key], key)
@@ -131,11 +160,11 @@ class UIWindow extends FWObject
         enumerable: true
         configurable: false
 
-    return (stylelist, obj) =>
+    return (stylelist, obj, key=undefined) =>
       if (!stylelist?)
         return
       obj = stylelist if (!obj?)
-      setDescriptor(stylelist, obj)
+      setDescriptor(stylelist, obj, key)
       return
 
 
@@ -195,15 +224,62 @@ class UIWindow extends FWObject
     if (!@__element?)
       return
 
-    @__setBackgroundColor()
-    @__setDraggable()
-    @__setResizable()
-    @__setBorder()
-    @__setAlpha()
-    @__setFrame(@frame)
-    @__setCornerRadius()
-    @setShadow(@shadow, @shadowParam)
-    @__setHidden()
+    else if (!key?)
+      @__setBackgroundColor()
+      @__setDraggable()
+      @__setResizable()
+      @__setBorder()
+      @__setAlpha()
+      @__setFrame(@frame)
+      @__setCornerRadius()
+      @setShadow(@shadow, @shadowParam)
+      @__setHidden()
+    else
+      flag = false
+      if (['backgeoundColor'].indexOf(key) >= 0)
+        flag = true
+        @__setBackgroundColor()
+      if (['draggable'].indexOf(key) >= 0)
+        flag = true
+        @__setDraggable()
+      if (['resizable'].indexOf(key) >= 0)
+        flag = true
+        @__setResizable()
+      if (['borderColor', 'borderWidth'].indexOf(key) >= 0)
+        flag = true
+        @__setBorder()
+      if (['alpha'].indexOf(key) >= 0)
+        flag = true
+        @__setAlpha()
+      if (['frame', 'size', 'origin'].indexOf(key) >= 0)
+        flag = true
+        @__setFrame(@frame)
+      if (['constraints', 'frame'].indexOf(key) >= 0)
+        flag = true
+        @__setConstraints(@frame, key)
+      if (['cornerRadius'].indexOf(key) >= 0)
+        flag = true
+        @__setCornerRadius()
+      if (['shadow', 'shadowParam'].indexOf(key) >= 0)
+        flag = true
+        @setShadow(@shadow, @shadowParam)
+      if (['hidden'].indexOf(key) >= 0)
+        flag = true
+        @__setHidden()
+      if (!flag)
+        @__setBackgroundColor()
+        @__setDraggable()
+        @__setResizable()
+        @__setBorder()
+        @__setAlpha()
+        @__setFrame(@frame)
+        @__setCornerRadius()
+        @setShadow(@shadow, @shadowParam)
+        @__setHidden()
+
+    #-------------------------------------------------------------------------
+    # click event
+    #-------------------------------------------------------------------------
     @__bindGesture()
 
     #-------------------------------------------------------------------------
@@ -604,21 +680,27 @@ class UIWindow extends FWObject
         opacity: dragalpha
         start: (event, ui) =>
         drag:(event, ui) =>
+          style = @__styleUpdateFlag
           @__styleUpdateFlag = false
-          x = parseInt(@__element.style.left.replace(/px/, ""))
-          y = parseInt(@__element.style.top.replace(/px/, ""))
-          @frame.origin.x = x
-          @frame.origin.y = y
-          @__styleUpdateFlag = true
+          @frame.origin.x = parseInt(@__element.style.left.replace(/px/, ""))
+          @frame.origin.y = parseInt(@__element.style.top.replace(/px/, ""))
+          @__setFrame(@frame)
+          @__styleUpdateFlag = style
         stop: (event, ui) =>
+          ###
+          style = @__styleUpdateFlag
           @__styleUpdateFlag = false
+          ###
           @frame = FWRectMake(
             parseFloat(ui.position.left)
             parseFloat(ui.position.top)
             @frame.size.width
             @frame.size.height
           )
-          @__styleUpdateFlag = true
+          ###
+          @__setFrame(@frame)
+          @__styleUpdateFlag = style
+          ###
     else
       $(@__viewSelector).draggable
         disabled: true
@@ -632,7 +714,8 @@ class UIWindow extends FWObject
         disabled: false
         handles: "n, e, s, w, se"
         ghost: true
-        stop: (event, ui) =>
+        resize:(event, ui) =>
+          style = @__styleUpdateFlag
           @__styleUpdateFlag = false
           @frame = FWRectMake(
             ui.position.left
@@ -640,8 +723,22 @@ class UIWindow extends FWObject
             ui.size.width
             ui.size.height
           )
-          @didWindowResize()
-          @__styleUpdateFlag = true
+          @__setFrame(@frame)
+          @__styleUpdateFlag = style
+        stop: (event, ui) =>
+          ###
+          style = @__styleUpdateFlag
+          @__styleUpdateFlag = false
+          ###
+          @frame = FWRectMake(
+            ui.position.left
+            ui.position.top
+            ui.size.width
+            ui.size.height
+          )
+          ###
+          @__styleUpdateFlag = style
+          ###
     ###
     else
       $(@__viewSelector).resizable
@@ -678,13 +775,16 @@ class UIWindow extends FWObject
   # setFrame
   #===========================================================================
   __setFrame:(frame) ->
-    bounds = FWApplication.getBounds()
-    origin = if (frame.origin?) then frame.origin else @frame.origin
-    size = if (frame.size?) then frame.size else @frame.size
-    @__element.style.left = "#{@frame.origin.x}px"
-    @__element.style.top = "#{@frame.origin.y}px"
-    @__element.style.width = "#{@frame.size.width}px"
-    @__element.style.height = "#{@frame.size.height}px"
+    newframe = {}
+    newframe.origin = if (frame.origin?) then frame.origin else @frame.origin
+    newframe.size = if (frame.size?) then frame.size else @frame.size
+
+    @__setConstraints(newframe, 'frame')
+
+    @__element.style.left = "#{newframe.origin.x}px"
+    @__element.style.top = "#{newframe.origin.y}px"
+    @__element.style.width = "#{newframe.size.width}px"
+    @__element.style.height = "#{newframe.size.height}px"
 
   #===========================================================================
   # setCornerRadius
@@ -695,6 +795,82 @@ class UIWindow extends FWObject
 
       $(@__viewSelector).css("-webkit-border-radius", @cornerRadius+"px")
       $(@__viewSelector).css("-moz-border-radius", @cornerRadius+"px")
+
+  #===========================================================================
+  # set constraints
+  #===========================================================================
+  __setConstraints:(frame, key=undefined)->
+    #----------------
+    # copy current frame to temporary
+    #----------------
+    tmpframe = objCopy(frame)
+    if (@constraints.position.left?)
+      tmpframe.origin.x = @constraints.position.left
+
+    if (@constraints.isActive == false)
+      return tmpframe
+
+    #----------------
+    # position constraints
+    #----------------
+    if (@constraints.position.left?)
+      tmpframe.origin.x = @constraints.position.left
+
+    if (@constraints.position.top?)
+      tmpframe.origin.y = @constraints.position.top
+
+    #----------------
+    # size constraints
+    #----------------
+    if (@constraints.position.left? && @constraints.position.right?)
+      tmpframe.size.width = @constraints.position.right - @constraints.position.left
+
+    if (@constraints.position.top? && @constraints.position.bottom?)
+      tmpframe.size.height = @constraints.position.bottom - @constraints.position.top
+
+    if (@constraints.space.leading.target?)
+      if (!@constraints.position.left?)
+        constant = @constraints.space.leading.constant || 0
+        selfx = tmpframe.origin.x
+        targetx = @constraints.space.leading.target.frame.origin.x
+        if (selfx < targetx)
+        else
+          x = (@constraints.space.leading.target.frame.origin.x + @constraints.space.leading.target.frame.size.width) + 1 + constant
+      else
+        x = @constraints.position.left
+
+      if (!@constraints.position.right?)
+        right = @constraints.space.trailing.target.frame.origin.x - 1 - tmpframe.size.width - @constraints.space.trailing.constant
+
+    ###
+      constraints:
+        position:
+          left: undefined
+          top: undefined
+          right: undefined
+          bottom: undefined
+        space:
+          leading:
+            target: undefined
+            edge: undefined
+            value: undefined
+          trailing:
+            target: undefined
+            edge: undefined
+            value: undefined
+          top:
+            target: undefined
+            edge: undefined
+            value: undefined
+          bottom:
+            target: undefined
+            edge: undefined
+            value: undefined
+        aspect: undefined
+        center:
+          horizontal: undefined
+          vertical: undefined
+    ###
 
   #===========================================================================
   # create tag

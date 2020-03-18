@@ -74,6 +74,16 @@ class UITextView extends UIView
     if (!@__element?)
       return
 
+    if (key == "frame")
+      if (@editable && @editormode == "normal")
+        diff = 4
+      else
+        diff = 0
+      framewidth = @frame.size.width - (@margin * 2)
+      frameheight = @frame.size.height - (@margin * 2)
+      @__textelement.style.width = "#{framewidth-diff}px"
+      @__textelement.style.height = "#{frameheight-diff}px"
+
     if (key == "editable" || !@__textelement?)
       @__changeEditable()
 
@@ -128,7 +138,7 @@ class UITextView extends UIView
           @__textelement.innerHTML = text.replace(/\r*\n/g, "<br>")
 
     if (@editable)
-      @__textelement.style.user-select = "text"
+      @__textelement.style.userSelect = "text"
       #----------------------------------------------------------------------
       # 編集モード時のエディターモード設定
       #----------------------------------------------------------------------
@@ -183,7 +193,7 @@ class UITextView extends UIView
       valign = "top"
 
     else
-      @__textelement.style.user-select = "none"
+      @__textelement.style.userSelect = "none"
       @__textelement.style["-webkit-touch-callout"] = "none"
       @__textelement.style["-webkit-user-select"] = "none"
       @__textelement.style["-moz-user-select"] = "none"
@@ -328,7 +338,7 @@ class UITextView extends UIView
     @__textelement.style.zIndex = 1
     @__textelement.style.wordBreak = "break-all"
     @__textelement.style.display = "table-cell"
-    @__textelement.style.overflow = "normal"
+    @__textelement.style.overflow = "hidden"
 
     family = @__getFontFamily()
     @__textelement.style.fontFamily = family
