@@ -197,23 +197,49 @@ copy_stationary_file = ->
 
 setup_freeport = ->
   return new Promise (resolve, reject) ->
-    freeport = get_free_port(5000, 2)
-    if (freeport.length < 2)
-      console.log("Not enough free ports(5000~).")
-      reject(-1)
+    exclude_port = []
+    # check default.json
+    default_portnum = 0
+    target = "#{APPS_DIR}/config/default.json"
+    if (!isExists(target)?)
+      default_portnum = 1
     else
-      defport = freeport[0]
-      devport = freeport[1]
-      execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{defport}/' > #{APPS_DIR}/config/default.json")
-      execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{devport}/' > #{APPS_DIR}/config/develop.json")
-      resolve(0)
+      default_json = require("#{APPS_DIR}/config/default.json")
+      exclude_port.push = default_json.network.port
+
+    # check develop.json
+    develop_portnum = 0
+    target = "#{APPS_DIR}/config/develop.json"
+    if (!isExists(target)?)
+      develop_portnum = 1
+    else
+      develop_json = require("#{APPS_DIR}/config/develop.json")
+      exclude_port.push = develop_json.network.port
+
+    total_portnum = default_portnum + develop_portnum
+
+    if (total_portnum > 0)
+      freeport = get_free_port(5000, total_portnum, exclude_port)
+      if (freeport.length < total_portnum)
+        console.log("Not enough free ports(5000~).")
+      else
+        if (default_portnum > 0)
+          setport = freeport.shift()
+          execSync("cat #{MODULES_DIR}/template/default.json.org|sed -e 's/###port###/#{setport}/' > #{APPS_DIR}/config/default.json")
+        if (develop_portnum > 0)
+          setport = freeport.shift()
+          execSync("cat #{MODULES_DIR}/template/develop.json.org|sed -e 's/###port###/#{setport}/' > #{APPS_DIR}/config/develop.json")
+
+    resolve(0)
 
 #=============================================================================
 # get number of free port
 #=============================================================================
-get_free_port = (start, num=1) ->
+get_free_port = (start, num=1, exclude_port=[]) ->
   port = execSync("sudo -i netstat -an | grep 'LISTEN ' | awk 'match($4, /[\:\.][0-9]*$/) {print substr($4, RSTART+1, RLENGTH)}' | sort -nu").toString().trim()
   portlist = port.split("\n")
+  exclude_port.forEach (p) ->
+    portlist.push(p)
   freeport = []
   portlist.forEach (p, idx) ->
     portlist[idx] = parseInt(p)
