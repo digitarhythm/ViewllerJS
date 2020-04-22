@@ -31,7 +31,7 @@ class UIListView extends UIView
     @__datanum = 0
     @__cellViewList = []
     @__action - undefined
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
 
     @setObserve(@__style, @)
 
@@ -41,8 +41,8 @@ class UIListView extends UIView
 
   setStyle:(key)->
     super(key)
-    @__addelement.style.overflowX = "hidden"
-    @__addelement.style.overflowY = "auto"
+    @viewelement.style.overflowX = "hidden"
+    @viewelement.style.overflowY = "auto"
     @__highlightColumn(@selectedIndex) if (@selectedIndex?)
 
   #============================================================================
@@ -229,7 +229,7 @@ class UIListView extends UIView
       @__setCell(cell, "normal")
       @addSubview(cell)
       @__cellViewList.push(cell)
-      elm = cell.__addelement || cell.__element
+      elm = cell.viewelement || cell.__element
       elm.addEventListener "mouseover", =>
         @__setCell(cell, "highlight")
       elm.addEventListener "mouseleave", =>

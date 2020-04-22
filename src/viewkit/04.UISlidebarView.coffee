@@ -21,7 +21,7 @@ class UISlidebarView extends UIView
     @__slider = undefined
     @__gauge = undefined
     @__margin = 64
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
 
     @__style.sliderColor = FWColor(0, 127, 255, 0.8)
     @__style.value = 0
@@ -91,7 +91,7 @@ class UISlidebarView extends UIView
 
     @__parentelement.appendChild(@__slider)
 
-    @__element.addEventListener 'mouseleave', (event) =>
+    @viewelement.addEventListener 'mouseleave', (event) =>
       @__drag = false
 
   #========================================================================

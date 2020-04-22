@@ -58,9 +58,9 @@ class UIView extends UIWindow
     @__scrollelement.style["-khtml-user-select"] = "none"
     @__scrollelement.style["-o-user-select"] = "none"
 
-    @__addelement.appendChild(@__scrollbase)
+    @viewelement.appendChild(@__scrollbase)
     @__scrollbase.appendChild(@__scrollelement)
-    @__addelement = @__scrollelement
+    @viewelement = @__scrollelement
 
     @setObserve(@__style, @)
     @setStyle()

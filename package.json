@@ -21,6 +21,7 @@
   "dependencies": {
     "argv": "0.0.2",
     "async": "^2.6.1",
+    "axios": "^0.19.2",
     "bluebird": "^3.5.0",
     "child_process": "^1.0.2",
     "chokidar": "^1.7.0",

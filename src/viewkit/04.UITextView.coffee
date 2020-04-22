@@ -47,13 +47,14 @@ class UITextView extends UIView
     @__frameelement = undefined
     @__textelement = undefined
     @__editordiv = undefined
-    @__parentelement = @__addelement
+    @parentelement = @viewelement
 
   destructor:->
     super()
 
   viewDidLoad:->
     super()
+    @setStyle('editable')
 
   viewDidAppear:->
     super()
@@ -71,7 +72,7 @@ class UITextView extends UIView
   setStyle:(key = undefined)->
     super(key)
 
-    if (!@__element?)
+    if (!@viewelement?)
       return
 
     if (key == "frame")
@@ -262,6 +263,8 @@ class UITextView extends UIView
     if (!@editable?)
       return
 
+    echo "change editable: %@, editormode=%@", @editable, @editormode
+
     #------------------------------------------------------------------------
     # すでにテキストエレメントがあった場合は削除
     #------------------------------------------------------------------------
@@ -271,7 +274,7 @@ class UITextView extends UIView
     # marginを考慮したフレームエレメントを作成
     @__frameelement = document.createElement("div")
     @__frameelement.setAttribute("id", "#{@UniqueID}_frame")
-    @__parentelement.appendChild(@__frameelement)
+    @parentelement.appendChild(@__frameelement)
 
     #--------------------------------------------------------------------------
     # テキストエレメント作成
@@ -294,7 +297,7 @@ class UITextView extends UIView
     @__textelement.setAttribute("id", @UniqueID+"_text")
 
     @__frameelement.appendChild(@__textelement)
-    #@__addelement = @__textelement
+    #@viewelement = @__textelement
 
     #--------------------------------------------------------------------------
     # エレメント設定

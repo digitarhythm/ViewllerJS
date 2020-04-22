@@ -26,7 +26,7 @@ class UIIndicatorView extends UIWindow
 
     @__style.type = "UIIndicatorTypeWhite"
 
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
 
     #================================
     @setObserve(@__style, @)

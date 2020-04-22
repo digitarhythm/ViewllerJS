@@ -18,7 +18,7 @@ class UIVideoView extends UIView
     @__style.controls = false
 
     # add private element
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
     @__videoelement = document.createElement("video")
     @__videoelement.setAttribute("id", @UniqueID+"_video")
     @__videoelement.addEventListener 'play', =>
@@ -44,7 +44,7 @@ class UIVideoView extends UIView
     @__parentelement.appendChild(@__videoelement)
 
     # video onload event
-    @__element.addEventListener "loadedmetadata", =>
+    @viewelement.addEventListener "loadedmetadata", =>
       @__videoelement.style.width = "#{@frame.size.width}px"
       @__videoelement.style.height = "#{@frame.size.height}px"
       @__videoelement.style.position = "absolute"
@@ -53,7 +53,7 @@ class UIVideoView extends UIView
       @vidwidth = @__videoelement.videoWidth
       @vidheight = @__videoelement.videoHeight
 
-    @__element.addEventListener "loadeddata", =>
+    @viewelement.addEventListener "loadeddata", =>
       if (@func?)
         @func(@)
         @func = undefined

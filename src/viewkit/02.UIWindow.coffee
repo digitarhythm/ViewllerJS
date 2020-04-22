@@ -18,11 +18,10 @@ class UIWindow extends FWObject
 
     # view property
     @parent = undefined
+    @viewelement = undefined # このviewにaddSubviewされたものが追加されるエレメント
 
     # private values
-    @__element = undefined
-    @__baseelement = undefined
-    @__addelement = undefined
+    @__element = undefined # 外観を形成するエレメント
     @__styleUpdateFlag = false
     @__viewSelector = "#"+@UniqueID
     @__childobj = {}
@@ -151,7 +150,7 @@ class UIWindow extends FWObject
             @__styleUpdateFlag = styleUpdateBackup
           return value
         set: (v) =>
-          echo "descript key=%@", key
+          echo "descript key=%@, v=%@", key, v if (key == 'editable')
           value = v
           if (typeof(v) == 'object' && !Array.isArray(v))
             @setObserve(v, obj[key], key)
@@ -196,7 +195,7 @@ class UIWindow extends FWObject
     for key, obj of @__childobj
       if (!obj.__element?)
         obj.__element.style.visibility = "hidden"
-        addelement = @__addelement || @__element
+        addelement = @viewelement || @__element
         addelement.appendChild(obj.__element)
         obj.viewDidLoad()
         obj.viewDidAppear()
@@ -236,7 +235,7 @@ class UIWindow extends FWObject
       @__setHidden()
     else
       flag = false
-      if (['backgeoundColor'].indexOf(key) >= 0)
+      if (['backgroundColor'].indexOf(key) >= 0)
         flag = true
         @__setBackgroundColor()
       if (['draggable'].indexOf(key) >= 0)
@@ -353,7 +352,7 @@ class UIWindow extends FWObject
       __ACTORLIST[obj.UniqueID] = obj
       if (@__element?)
         obj.__element.style.visibility = "hidden"
-        addelement = @__addelement || @__element
+        addelement = @viewelement || @__element
         addelement.appendChild(obj.__element)
         obj.viewDidLoad()
         obj.viewDidAppear()
@@ -877,7 +876,7 @@ class UIWindow extends FWObject
   #===========================================================================
   __createElement:->
     @__element = document.createElement("div")
-    @__addelement = @__element
+    @viewelement = @__element
     @__element.setAttribute("id", @UniqueID)
     @__element.style.position = "absolute"
     @__element.style.zIndex = 1

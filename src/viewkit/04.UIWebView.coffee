@@ -10,7 +10,7 @@ class UIWebView extends UIView
 
     @__style.src = ""
 
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
 
     @__webelement = document.createElement("iframe")
     @__webelement.setAttribute("id", @UniqueID+"_frame")

@@ -137,6 +137,8 @@ FWAPICALL = (param, func = undefined) ->
   headers = param.headers
   data = JSON.stringify(param.data) if (typeof param.data == 'object')
   url = "#{window.origin}/#{file}/#{endpoint}"
+
+  ###
   $.ajaxSetup
     type    : type
     dataType: 'json'
@@ -155,6 +157,18 @@ FWAPICALL = (param, func = undefined) ->
     func
       err: -1
       message: textStatus
+  ###
+  axios
+    method: type
+    url: url
+    responseType: 'json'
+  .then (ret) =>
+    func(ret) if (typeof(func) == "function")
+  .catch (e) =>
+    func
+      err: -1
+      message: textStatus
+
 
 #=========================================================================
 # return toggle
@@ -184,7 +198,8 @@ escapeHTML = (s) ->
 #=========================================================================
 # boot proc
 #=========================================================================
-$ ->
+#$ ->
+window.onload = ->
   requestAnimationFrame = window.requestAnimationFrame ||
               window.mozRequestAnimationFrame ||
               window.webkitRequestAnimationFrame ||
@@ -205,6 +220,7 @@ $ ->
       if (typeof(obj.behavior) == 'function')
         obj.behavior()
 
+  ###
   $.Finger =
     pressDuration: 300
     doubleTapInterval: 100
@@ -220,12 +236,21 @@ $ ->
   $("body").css("right", "0px")
   $("body").css("bottom", "0px")
   $("body").css("overflow", "auto")
+  ###
+  document.body.style.position = "absolute"
+  document.body.style.top = "0px"
+  document.body.style.left = "0px"
+  document.body.style.right = "0px"
+  document.body.style.bottom = "0px"
+  document.body.style.overflow = "auto"
 
-  $(document).on "contextmenu", (e) =>
+  #$(document).on "contextmenu", (e) =>
+  document.addEventListener "contextmenu", (e) =>
     e.preventDefault()
     return false
   frm = FWApplication.getBounds()
   main = new applicationMain(frm)
+  mainelement = main.__viewSelector
   __ACTORLIST[main.UniqueID] = main
   main.borderWidth = 0.0
   main.containment = true
@@ -238,11 +263,13 @@ $ ->
       clearTimeout(timer)
     timer = setTimeout ->
       frm = FWApplication.getBounds()
-      $(main.__viewSelector).css("width", frm.size.width)
-      $(main.__viewSelector).css("height", frm.size.height)
+      #$(main.__viewSelector).css("width", frm.size.width)
+      #$(main.__viewSelector).css("height", frm.size.height)
+      document.getElementById(mainelement).stype.width = frm.size.width+"px"
+      document.getElementById(mainelement).stype.height = frm.size.height+"px"
       main.didBrowserResize(frm)
     , 300
-  $("body").append(main.__element)
+  document.body.append(main.viewelement)
   main.setStyle()
   main.__bindGesture()
   main.__setTouches()

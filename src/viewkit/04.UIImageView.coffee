@@ -42,7 +42,7 @@ class UIImageView extends UIView
     # add private element
     @__imageelement = document.createElement("canvas")
     @__imageelement.setAttribute("id", "#{@UniqueID}_image")
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
     @__orignSize = undefined
 
     @setObserve(@__style, @)

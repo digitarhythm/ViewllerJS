@@ -53,7 +53,7 @@ class UIButton extends UIView
     @__org_y = @frame.origin.y
     @__enterflag = false
     @__clickflag = false
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
     @__textshadowparam = undefined
 
     @__buttonelement = document.createElement("div")
@@ -249,7 +249,7 @@ class UIButton extends UIView
     super()
     @__clickflag = true
     @shadow = false
-    @__element.style.transform = "translateY(1px)"
+    @viewelement.style.transform = "translateY(1px)"
 
   touchesMoved:(pos, e)->
     super()
@@ -264,13 +264,13 @@ class UIButton extends UIView
 
     @__clickflag = false
     @shadow = true
-    @__element.style.transform = "translateY(0px)"
+    @viewelement.style.transform = "translateY(0px)"
 
   touchesCanceled:(pos, e)->
     super()
     @__clickflag = false
     @shadow = true
-    @__element.style.transform = "translateY(0px)"
+    @viewelement.style.transform = "translateY(0px)"
 
 ###
 ---model_start---

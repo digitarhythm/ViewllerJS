@@ -130,7 +130,7 @@ class UISegmentedControl extends UIView
           @delegate.didSelectRowAtIndexPath(self.index, @withIdentifier) if (typeof(@delegate.didSelectRowAtIndexPath) == 'function')
 
       elm.textContent = @controls[idx]
-      @__addelement.appendChild(elm)
+      @viewelement.appendChild(elm)
       left += segwidth
 
 ###

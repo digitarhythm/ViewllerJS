@@ -38,7 +38,7 @@ class UITextLabel extends UIView
       family: "gothic"
 
     @__textelement = undefined
-    @__parentelement = @__addelement
+    @__parentelement = @viewelement
 
     @setObserve(@__style, @)
 
