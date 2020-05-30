@@ -61,17 +61,13 @@ $ viewller -l
 $ viewller -r [rollback No.]
 ```
 
-- The port number to be used is
+- It is set by searching for a port number that can be used after port 5000.
 
 Development environment  
 [Application directory]/config/develop.json
 
 Production environment  
 [Application directory]/config/default.json
-
-Set it with.
-The default port is 5001 in the development environment.  
-The production environment is 5000.
 
 - Launch runserver in development and production environment. Immediately after creating the application, "Sorry mode" is turned on. In this state, when you browse the production environment, "underconstruction" is displayed. This page can be customized.
 ```
@@ -139,17 +135,13 @@ $ viewller -l
 $ viewller -r [rollback No.]
 ```
 
-- 使用するポートは、
+- ポート5000以降で使用できるポート番号を検索して設定します。
 
 ・開発環境  
 [アプリケーションディレクトリ}/config/develop.json
 
 ・本番環境  
 [アプリケーションディレクトリ}/config/default.json
-
-で設定します。  
-デフォルトポートは、開発環境が5001です。  
-本番環境は5000です。
 
 - アプリケーションを作成直後は、「Sorry mode」がオンになっています。この状態で本番環境をブラウズすると、 "underconstruction"が表示されます。このページはカスタマイズすることができます。
 ```
