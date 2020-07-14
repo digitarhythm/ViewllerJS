@@ -6,7 +6,7 @@
 
 class FWObject
   constructor:->
-    @UniqueID = FWApplication.UniqueID()
+    @UniqueID = FWApplication.getUniqueID()
     @self = @
     @origin = location.origin
 

@@ -11,6 +11,9 @@ class UIView extends UIWindow
 
     # visual setting
     @clipToBounds = true
+    @__clickpos =
+      x: 0
+      y: 0
 
     # add view parameter
     @__style.scrollbar = false
@@ -25,9 +28,6 @@ class UIView extends UIWindow
     #-------------------------------------------------------------------------
     # create base element
     #-------------------------------------------------------------------------
-    basewidth = @frame.size.width - (@margin * 2)
-    baseheight = @frame.size.height - (@margin * 2)
-
     @__scrollbase = document.createElement("div")
     @__scrollbase.setAttribute("id", "#{@UniqueID}_scrollbase")
     @__scrollbase.style.position = "absolute"
@@ -168,20 +168,23 @@ class UIView extends UIWindow
   #=========================================================================
   #=========================================================================
 
-  #=========================================================================
-  # touch event
-  #=========================================================================
-  touchesBegan:(pos, e)->
-    super()
+  viewDrag:(pos, e)->
+    if (@draggable && @__touched)
+      x = pos.pageX - @__clickpos.x
+      y = pos.pageY - @__clickpos.y
 
-  touchesMoved:(pos, e)->
-    super()
+      if (@containment)
+        if (x < @parent.margin)
+          x = @parent.margin
+        if (y < @parent.margin)
+          y = @parent.margin
+        if (x > @parent.frame.size.width - @frame.size.width - @parent.margin)
+          x = @parent.frame.size.width - @frame.size.width - @parent.margin
+        if (y > @parent.frame.size.height - @frame.size.height - @parent.margin)
+          y = @parent.frame.size.height - @frame.size.height - @parent.margin
 
-  touchesEnded:(pos, e)->
-    super()
-
-  touchesCanceled:(pos, e)->
-    super()
+      @frame.origin.x = x
+      @frame.origin.y = y
 
 ###
 ---model_start---

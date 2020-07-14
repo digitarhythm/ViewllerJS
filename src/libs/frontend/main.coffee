@@ -8,7 +8,9 @@
 GLOBAL = {}
 ORIGIN = node_origin
 LAPSEDTIME = Date.now()
-__ACTORLIST = []
+MOUSEPOS = {x:0,y:0}
+
+__VIEWOBJECT = []
 
 #=========================================================================
 # remove element from Array
@@ -52,7 +54,10 @@ sprintf = (a, b...) ->
 # real copy for object
 #=========================================================================
 objCopy = (a)->
-  return Object.assign({}, a)
+  if (Array.isArray(a))
+    return a.concat()
+  else
+    return Object.assign({}, a)
 
 #=========================================================================
 # rgba
@@ -214,11 +219,58 @@ window.onload = ->
     window.requestAnimationFrame ->
       __animationRequest(func)
 
-  __animationRequest ->
-    LAPSEDTIME = Date.now()
-    for id, obj of __ACTORLIST
-      if (typeof(obj.behavior) == 'function')
-        obj.behavior()
+  #=========================================================================
+  # window resize process
+  #=========================================================================
+  window.onresize = ->
+    if (timer != false)
+      clearTimeout(timer)
+    timer = setTimeout ->
+      frm = FWApplication.getBounds()
+      document.getElementById(mainelement).stype.width = frm.size.width+"px"
+      document.getElementById(mainelement).stype.height = frm.size.height+"px"
+      main.didBrowserResize(frm)
+    , 300
+
+  #=========================================================================
+  # view touch/click event
+  #=========================================================================
+  eventlist = ["mousemove", "touchmove"]
+  eventlist.forEach (evt) ->
+    document.addEventListener evt, (event)->
+      if (event.changedTouches != undefined)
+        e = event.changedTouches[0]
+      else
+        e = event
+
+      MOUSEPOS =
+        x: Math.floor(e.pageX)
+        y: Math.floor(e.pageY)
+
+      viewkeylist = Object.keys(__VIEWOBJECT)
+      for uniqueid in viewkeylist
+        view = __VIEWOBJECT[uniqueid]
+        if (view? && view.__touched && view.draggable)
+          ret = view.__getMouseClickPosition(e)
+          view.viewDrag(ret.pos, ret.e)
+  , false
+
+  eventlist = ["mouseup", "touchend"]
+  eventlist.forEach (evt) ->
+    document.addEventListener evt, (event)->
+      if (event.changedTouches != undefined)
+        e = event.changedTouches[0]
+      else
+        e = event
+
+      viewkeylist = Object.keys(__VIEWOBJECT)
+      for uniqueid in viewkeylist
+        view = __VIEWOBJECT[uniqueid]
+        if (view? && view.__touched)
+          ret = view.__getMouseClickPosition(e)
+          view.touchesEnded(ret.pos, ret.e)
+          view.__touched = false
+  , false
 
   ###
   $.Finger =
@@ -237,43 +289,47 @@ window.onload = ->
   $("body").css("bottom", "0px")
   $("body").css("overflow", "auto")
   ###
+
   document.body.style.position = "absolute"
+  document.body.style.width = "100%"
+  document.body.style.height = "100%"
   document.body.style.top = "0px"
   document.body.style.left = "0px"
   document.body.style.right = "0px"
   document.body.style.bottom = "0px"
-  document.body.style.overflow = "auto"
+  document.body.style.overflow = "hidden"
 
-  #$(document).on "contextmenu", (e) =>
-  document.addEventListener "contextmenu", (e) =>
+  document.body.addEventListener "contextmenu", (e) =>
     e.preventDefault()
     return false
   frm = FWApplication.getBounds()
   main = new applicationMain(frm)
   mainelement = main.__viewSelector
-  __ACTORLIST[main.UniqueID] = main
+  __VIEWOBJECT[main.UniqueID] = main
   main.borderWidth = 0.0
   main.containment = true
   main.clipToBounds = true
   main.backgroundColor = FWColor(255, 255, 255, 1.0)
   main.__setFrame(frm)
   timer = false
-  window.onresize = ->
-    if (timer != false)
-      clearTimeout(timer)
-    timer = setTimeout ->
-      frm = FWApplication.getBounds()
-      #$(main.__viewSelector).css("width", frm.size.width)
-      #$(main.__viewSelector).css("height", frm.size.height)
-      document.getElementById(mainelement).stype.width = frm.size.width+"px"
-      document.getElementById(mainelement).stype.height = frm.size.height+"px"
-      main.didBrowserResize(frm)
-    , 300
   document.body.append(main.viewelement)
   main.setStyle()
   main.__bindGesture()
   main.__setTouches()
   GLOBAL['rootview'] = main
 
+  #---------
+  # main process execute
+  #---------
   main.didFinishLaunching()
+
+  #---------
+  # animationFrame execute
+  #---------
+  __animationRequest ->
+    LAPSEDTIME = Date.now()
+    for id, obj of __VIEWOBJECT
+      if (typeof(obj.behavior) == 'function')
+        obj.behavior()
+
 

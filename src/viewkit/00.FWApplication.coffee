@@ -32,7 +32,7 @@ class FWApplication
   #=========================================================================
   # get unique id
   #=========================================================================
-  @UniqueID:->
+  @getUniqueID:->
     S4 = ->
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1)
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4())
@@ -138,7 +138,7 @@ class FWApplication
   #=========================================================================
   @contextmenu:(func)->
     if (func? && typeof(func) == 'function')
-      $(document).on "contextmenu", (e) =>
+      document.body.addEventListener "contextmenu", (e)=>
         e.preventDefault()
         pos =
           pageX: e.pageX
@@ -147,3 +147,4 @@ class FWApplication
           offsetY: e.offsetY
         func(pos, e)
         return false
+

@@ -113,7 +113,7 @@ system_check = ->
     # create src direcotry
     #=========================================================================
     # create model directory(src)
-    target = "#{APPS_DIR}/src/backend"
+    target = "#{APPS_DIR}/src/serverside"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -136,7 +136,7 @@ system_check = ->
       fs.mkdirsSync(target)
 
     # create model js directory(develop)
-    target = "#{APPS_DIR}/develop/js/backend"
+    target = "#{APPS_DIR}/develop/js/serverside"
     if (!isExists(target)?)
       fs.mkdirsSync(target)
 
@@ -185,7 +185,7 @@ copy_stationary_file = ->
       {"from": "#{MODULES_DIR}/template/application.json.org", "to": "#{APPS_DIR}/config/application.json"}
       {"from": "#{MODULES_DIR}/template/cdn.json.org", "to": "#{APPS_DIR}/config/cdn.json"}
       {"from": "#{MODULES_DIR}/template/applicationMain.coffee.org", "to": "#{APPS_DIR}/src/frontend/applicationMain.coffee"}
-      {"from": "#{MODULES_DIR}/template/sampleapi.coffee.org", "to": "#{APPS_DIR}/src/backend/sampleapi.coffee"}
+      {"from": "#{MODULES_DIR}/template/sampleapi.coffee.org", "to": "#{APPS_DIR}/src/serverside/sampleapi.coffee"}
       {"from": "#{MODULES_DIR}/template/sorrymode.ect", "to": "#{APPS_DIR}/src/template/sorrymode.ect"}
       {"from": "#{MODULES_DIR}/template/schema.json.org", "to": "#{APPS_DIR}/develop/database/schema.json"}
     ]
@@ -295,7 +295,7 @@ compile_all = (node_env = "develop")->
     console.log(ret) if (ret != "")
 
     console.log("user model/controller scripts compiling...")
-    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/backend -c #{APPS_DIR}/src/backend/*.coffee").toString()
+    ret = execSync("#{COMPILER_DEV} -b -o #{APPS_DIR}/develop/js/serverside -c #{APPS_DIR}/src/serverside/*.coffee").toString()
     console.log(ret) if (ret != "")
     ret = execSync("date +'%Y.%m.%d %H:%M:%S'").toString()
     console.log("Develop compiled: "+ret)
@@ -310,7 +310,7 @@ compile_all = (node_env = "develop")->
     console.log(ret) if (ret != "")
 
     console.log("user model/controller scripts compiling...")
-    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/backend -c #{APPS_DIR}/src/backend/*.coffee").toString()
+    ret = execSync("#{COMPILER} -e js -o #{APPS_DIR}/production/js/serverside -c #{APPS_DIR}/src/serverside/*.coffee").toString()
     console.log(ret) if (ret != "")
     ret = execSync("date +'%Y.%m.%d %H:%M:%S'").toString()
     console.log("Production compiled: "+ret)
@@ -323,7 +323,7 @@ start_development = ->
   compile_all("develop")
   env = Object.create(process.env)
   env.NODE_ENV = "develop"
-  spawn "node-dev", ["#{NODE_MODULES}/viewller/libs/backend/apps.min.js"], {env: env, stdio: "inherit"}
+  spawn "node-dev", ["#{NODE_MODULES}/viewller/libs/serverside/apps.min.js"], {env: env, stdio: "inherit"}
 
 #============================================================================
 # exec application on production mode
@@ -358,10 +358,10 @@ start_production = (restart = false) ->
         "-a"
         "-l"
         "#{APPS_DIR}/production/logs/viewller#{now}.log"
-        "./node_modules/viewller/libs/backend/apps.min.js"
+        "./node_modules/viewller/libs/serverside/apps.min.js"
       ], {env: env}
     catch e
-      spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/backend/apps.min.js"], {env: env}
+      spawn "forever", ["start", "--uid", CWD, "-p", CWD, "--pidFile", "process.pid", "-l", "#{APPS_DIR}/production/logs/viewller#{now}.log", "./node_modules/viewller/libs/serverside/apps.min.js"], {env: env}
 
   console.log "===> Production listening on *: "+port
 
@@ -415,7 +415,7 @@ deploy_application = ->
 
     dir = "#{fpath}/js/frontend"
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
-    dir = "#{fpath}/js/backend"
+    dir = "#{fpath}/js/serverside"
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
     dir = "#{fpath}/public"
     fs.mkdirsSync("#{APPS_DIR}/#{dir}")
@@ -612,7 +612,7 @@ __search_class_fname = (classname, filelists)->
 #=============================================================================
 watch_source = ->
   env = Object.create(process.env)
-  spawn COMPILER, ["-m", "-w", "-c", "#{APPS_DIR}/src/frontend", "-o", "#{APPS_DIR}/develop/js/frontend/", "-c", "#{APPS_DIR}/src/backend", "-o", "#{APPS_DIR}/develop/js/backend/"], {env: env, stdio: "inherit"}
+  spawn COMPILER, ["-m", "-w", "-c", "#{APPS_DIR}/src/frontend", "-o", "#{APPS_DIR}/develop/js/frontend/", "-c", "#{APPS_DIR}/src/serverside", "-o", "#{APPS_DIR}/develop/js/serverside/"], {env: env, stdio: "inherit"}
 
 #=============================================================================
 # set sorry mode

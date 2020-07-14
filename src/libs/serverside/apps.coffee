@@ -54,7 +54,7 @@ app.use("/#{pkgname}/view", express.static("#{__cwd}/apps/#{__jsdir}/js/frontend
 # load system module
 #============================================================================
 global.FWREQUIRE = (module)->
-  modulepath = "#{process.cwd()}/node_modules/viewller/libs/backend/#{module}.min"
+  modulepath = "#{process.cwd()}/node_modules/viewller/libs/serverside/#{module}.min"
   mod = require(modulepath)
   return mod
 
@@ -183,21 +183,21 @@ api = require("./api.min")
 app.use("/#{pkgname}/api", api)
 
 # システムモジュール読み込み
-readFileList("#{__viewller}/libs/backend").then (lists) ->
+readFileList("#{__viewller}/libs/serverside").then (lists) ->
   for fname in lists
     if (fname.match(/^.*\.js$/) && !fname.match(/^\./))
       apiorg = path.basename(fname).replace(/\.min\.js/, "")
-      model[apiorg] = require("#{__viewller}/libs/backend/#{apiorg}.min")
+      model[apiorg] = require("#{__viewller}/libs/serverside/#{apiorg}.min")
   return 1
 
 # ユーザーAPI読み込み
 .then (ret) ->
-  readFileList("#{__cwd}/apps/#{__jsdir}/js/backend").then (lists) ->
+  readFileList("#{__cwd}/apps/#{__jsdir}/js/serverside").then (lists) ->
     for fname in lists
       if (fname.match(/^.*\.js$/) && !fname.match(/^\./) && !fname.match(/^apps/))
         apiorg = path.basename(fname).match(/(.*?)\./, "$1")[1]
         try
-          apifname = "#{__cwd}/apps/#{__jsdir}/js/backend/#{apiorg}"
+          apifname = "#{__cwd}/apps/#{__jsdir}/js/serverside/#{apiorg}"
           model[apiorg] = require(apifname)
           app.use("/#{pkgname}/api/#{apiorg}", model[apiorg])
         #catch e

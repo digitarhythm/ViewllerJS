@@ -85,7 +85,7 @@ class UITextView extends UIView
       @__textelement.style.width = "#{framewidth-diff}px"
       @__textelement.style.height = "#{frameheight-diff}px"
 
-    if (key == "editable" || !@__textelement?)
+    if (!key? || key == "editormode" || key == "editable" || !@__textelement?)
       @__changeEditable()
 
     if (!@__textelement?)
@@ -263,8 +263,6 @@ class UITextView extends UIView
     if (!@editable?)
       return
 
-    echo "change editable: %@, editormode=%@", @editable, @editormode
-
     #------------------------------------------------------------------------
     # すでにテキストエレメントがあった場合は削除
     #------------------------------------------------------------------------
@@ -290,14 +288,13 @@ class UITextView extends UIView
           @text = @__textelement.value
     else
       #------------------------------------------------------------------------
-      # 閲覧モード or エディター編集モード
+      # 閲覧モード or vim編集モード
       #------------------------------------------------------------------------
       diff = 0
       @__textelement = document.createElement("div")
-    @__textelement.setAttribute("id", @UniqueID+"_text")
 
+    @__textelement.setAttribute("id", @UniqueID+"_text")
     @__frameelement.appendChild(@__textelement)
-    #@viewelement = @__textelement
 
     #--------------------------------------------------------------------------
     # エレメント設定
@@ -347,6 +344,7 @@ class UITextView extends UIView
     @__textelement.style.fontFamily = family
     @__textelement.style.fontSize = "#{@font.size}pt"
     @__textelement.style.fontWeight = @font.weight
+
     if (@font.textShadow)
       @__textelement.style.textShadow = CSSRGBA(FWColor(@font.textShadowParam.color.red, @font.textShadowParam.color.green, @font.textShadowParam.color.blue, @font.textShadowParam.color.alpha))+" #{@font.textShadowParam.offset.x}px #{@font.textShadowParam.offset.y}px #{@font.textShadowParam.width}px"
     else

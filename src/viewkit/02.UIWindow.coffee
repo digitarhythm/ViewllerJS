@@ -26,12 +26,12 @@ class UIWindow extends FWObject
     @__viewSelector = "#"+@UniqueID
     @__childobj = {}
     @__touched = false
+    @__clickpos =
+        x: 0
+        y: 0
     @__tapaction = undefined
     @__tapaction2 = undefined
     @__dblclickflag = false
-    @__pageorigin =
-      x: frame.origin.x
-      y: frame.origin.y
     @constraints =
       isActive: false
       position:
@@ -71,7 +71,7 @@ class UIWindow extends FWObject
     @__style =
       shadow: false
       shadowStyle: 'box'
-      resizable: false
+      #resizable: false
       draggable: false
       hidden: false
       frame: frame
@@ -116,7 +116,6 @@ class UIWindow extends FWObject
   # check style value observation
   #===========================================================================
   __setObserveStyle: =>
-
     setDescriptor = (stylelist, obj, key=undefined) =>
       for param, val of stylelist
         key2 = key
@@ -130,15 +129,6 @@ class UIWindow extends FWObject
             obj[param] = val
         key = key2
 
-      $(obj).on 'propertychange', (e, obj, key, v) =>
-        if (@__styleUpdateFlag && typeof(@setStyle) == 'function')
-          setTimeout =>
-            styleUpdateBackup = @__styleUpdateFlag
-            @__styleUpdateFlag = false
-            @setStyle(key)
-            @__styleUpdateFlag = styleUpdateBackup
-          , 0
-
     descriptor = (key, value0, obj) =>
       value = value0
       return
@@ -150,12 +140,16 @@ class UIWindow extends FWObject
             @__styleUpdateFlag = styleUpdateBackup
           return value
         set: (v) =>
-          echo "descript key=%@, v=%@", key, v if (key == 'editable')
           value = v
           if (typeof(v) == 'object' && !Array.isArray(v))
             @setObserve(v, obj[key], key)
-          $(obj).trigger 'propertychange', [obj, key, v]
-          return
+          if (@__styleUpdateFlag && typeof(@setStyle) == 'function')
+            setTimeout =>
+              styleUpdateBackup = @__styleUpdateFlag
+              @__styleUpdateFlag = false
+              @setStyle(key)
+              @__styleUpdateFlag = styleUpdateBackup
+            , 0
         enumerable: true
         configurable: false
 
@@ -226,7 +220,7 @@ class UIWindow extends FWObject
     else if (!key?)
       @__setBackgroundColor()
       @__setDraggable()
-      @__setResizable()
+      #@__setResizable()
       @__setBorder()
       @__setAlpha()
       @__setFrame(@frame)
@@ -241,9 +235,9 @@ class UIWindow extends FWObject
       if (['draggable'].indexOf(key) >= 0)
         flag = true
         @__setDraggable()
-      if (['resizable'].indexOf(key) >= 0)
-        flag = true
-        @__setResizable()
+      #if (['resizable'].indexOf(key) >= 0)
+      #  flag = true
+      #  @__setResizable()
       if (['borderColor', 'borderWidth'].indexOf(key) >= 0)
         flag = true
         @__setBorder()
@@ -268,7 +262,7 @@ class UIWindow extends FWObject
       if (!flag)
         @__setBackgroundColor()
         @__setDraggable()
-        @__setResizable()
+        #@__setResizable()
         @__setBorder()
         @__setAlpha()
         @__setFrame(@frame)
@@ -349,7 +343,7 @@ class UIWindow extends FWObject
       obj.parent = @self
       obj.__parent = @self
       @__childobj[obj.UniqueID] = obj
-      __ACTORLIST[obj.UniqueID] = obj
+      __VIEWOBJECT[obj.UniqueID] = obj
       if (@__element?)
         obj.__element.style.visibility = "hidden"
         addelement = @viewelement || @__element
@@ -374,24 +368,25 @@ class UIWindow extends FWObject
     for id, obj of @__childobj
       obj.removeFromSuperview()
     @__childobj = undefined
-    delete __ACTORLIST[@UniqueID]
-    $(@__viewSelector).remove()
+    delete __VIEWOBJECT[@UniqueID]
+    if (@parent?)
+      self = document.getElementById(@UniqueID)
+      parentnode = @parent.viewelement || @parent.__element
+      parentnode.removeChild(self)
 
   #===========================================================================
   # bring view to front
   #===========================================================================
   bringViewToFront: ->
-    if (!@editable)
-      v = $(@__viewSelector)
-      v.appendTo(v.parent())
+    @parent.viewelement.removeChild(@__element)
+    @parent.viewelement.appendChild(@__element)
 
   #===========================================================================
   # send view to back
   #===========================================================================
   sendViewToBack: ->
-    if (!@editable)
-      v = $(@__viewSelector)
-      v.prependTo(v.parent())
+    @parent.viewelement.removeChild(@__element)
+    @parent.viewelement.prepend(@__element)
 
   #===========================================================================
   # animate with duration
@@ -553,86 +548,69 @@ class UIWindow extends FWObject
     if (!@__element?)
       return
 
-    $(@__viewSelector).bind
-      'mousedown':(event)=>
-        if (!event? || !@userInteractionEnabled)
-          return
+    #--------------------------------------
+    # mouse down event
+    #--------------------------------------
+    _touchesbegan = (self, event)=>
+      if (!event? || !@userInteractionEnabled)
+        return
 
+      if (typeof @touchesBegan == 'function')
         @__touched = true
+        ret = @__getMouseClickPosition(event)
+        @__clickpos.x = ret.pos.offsetX
+        @__clickpos.y = ret.pos.offsetY
+        @touchesBegan(ret.pos, ret.event)
 
-        if (event.changedTouches != undefined)
-          e = event.changedTouches[0]
-        else
-          e = event
-        pos =
-          offsetX: Math.floor(e.offsetX)
-          offsetY: Math.floor(e.offsetY)
-          pageX: Math.floor(e.pageX)
-          pageY: Math.floor(e.pageY)
+    eventlist = ["mousedown", "click", "touchstart"]
+    eventlist.forEach (evt) =>
+      document.addEventListener evt, _touchesbegan(event), false
 
-        if (typeof @touchesBegan == 'function')
-          @touchesBegan(pos, e)
-
-      'mousemove':(event)=>
-        if (!event? || !@userInteractionEnabled)
+    #--------------------------------------
+    # mouse move event
+    #--------------------------------------
+    eventlist = ["mousemove", "touchmove"]
+    eventlist.forEach (evt) =>
+      document.addEventListener evt, (event) =>
+        if (!event? || !@userInteractionEnabled || !@__touched)
           return
-
-        if (event.changedTouches != undefined)
-          e = event.changedTouches[0]
-          pos =
-            offsetX: Math.floor(e.pageX - @__pageorigin.x)
-            offsetY: Math.floor(e.pageY - @__pageorigin.y)
-            pageX: Math.floor(e.pageX)
-            pageY: Math.floor(e.pageY)
-          if (pos.offsetX < 0 || pos.offsetY < 0 || pos.offsetX > @frame.size.width || pos.offsetY > @frame.size.height)
-            @__triggerEvent(@__element, "touchout")
-            return
-        else
-          e = event
-          pos =
-            offsetX: Math.floor(e.offsetX)
-            offsetY: Math.floor(e.offsetY)
-            pageX: Math.floor(e.pageX)
-            pageY: Math.floor(e.pageY)
 
         if (typeof @touchesMoved == 'function')
-          @touchesMoved(pos, e)
+          ret = @__getMouseClickPosition(event)
+          echo "draggable=%@, touched=%@, x=%@, y=%@", @draggable, @__touched, ret.pos.offsetX, ret.pos.offsetY
+          @touchesMoved(ret.pos, ret.event)
+    , false
 
-      'mouseup':(event)=>
-        if (!@__touched || !event? || !@userInteractionEnabled)
+    #--------------------------------------
+    # mouse up event
+    #--------------------------------------
+    eventlist = ["mouseup", "touchend"]
+    eventlist.forEach (evt) =>
+      document.addEventListener evt, (event) =>
+        @__touched = false
+        echo "mouseup: touched=%@", @__touched
+
+        if (!event? || !@userInteractionEnabled)
           return
 
-        if (event.changedTouches != undefined)
-          e = event.changedTouches[0]
-        else
-          e = event
-        pos =
-          offsetX: Math.floor(e.offsetX)
-          offsetY: Math.floor(e.offsetY)
-          pageX: Math.floor(e.pageX)
-          pageY: Math.floor(e.pageY)
-
-        @__touched = false
         if (typeof @touchesEnded == 'function')
-          @touchesEnded(pos, e)
+          ret = @__getMouseClickPosition(event)
+          @touchesEnded(ret.pos, ret.event)
+    , false
 
-      'mouseleave':(event)=>
-        if (!@__touched || !event? || !@userInteractionEnabled)
+    #--------------------------------------
+    # mouse leave event
+    #--------------------------------------
+    eventlist = ["mouseleave"]
+    eventlist.forEach (evt) =>
+      document.addEventListener evt, (event) =>
+        if (!event? || !@userInteractionEnabled)
           return
-
-        @__touched = false
-        if (event.changedTouches != undefined)
-          e = event.changedTouches[0]
-        else
-          e = event
-        pos =
-          offsetX: e.offsetX
-          offsetY: e.offsetY
-          pageX: e.pageX
-          pageY: e.pageY
 
         if (typeof @touchesCanceled == 'function')
-          @touchesCanceled(pos, e)
+          ret = @__getMouseClickPosition(event)
+          @touchesCanceled(ret.pos, ret.event)
+    , false
 
   #===========================================================================
   # remove child obj
@@ -657,12 +635,14 @@ class UIWindow extends FWObject
         obj: obj.parent
         x: x
         y: y
+
     return ret
 
   #===========================================================================
   # setDraggable
   #===========================================================================
   __setDraggable:->
+    ###
     # ドラッグがtrueかfalseかで処理を分ける
     if (@draggable)
       dragalpha = if (@alpha < 0.8) then @alpha else 0.8
@@ -686,27 +666,25 @@ class UIWindow extends FWObject
           @__setFrame(@frame)
           @__styleUpdateFlag = style
         stop: (event, ui) =>
-          ###
-          style = @__styleUpdateFlag
-          @__styleUpdateFlag = false
-          ###
+          #style = @__styleUpdateFlag
+          #@__styleUpdateFlag = false
           @frame = FWRectMake(
             parseFloat(ui.position.left)
             parseFloat(ui.position.top)
             @frame.size.width
             @frame.size.height
           )
-          ###
-          @__setFrame(@frame)
-          @__styleUpdateFlag = style
-          ###
+          #@__setFrame(@frame)
+          #@__styleUpdateFlag = style
     else
       $(@__viewSelector).draggable
         disabled: true
+    ###
 
   #===========================================================================
   # setResizable
   #===========================================================================
+  ###
   __setResizable:->
     if (@resizable)
       $(@__viewSelector).resizable
@@ -725,25 +703,20 @@ class UIWindow extends FWObject
           @__setFrame(@frame)
           @__styleUpdateFlag = style
         stop: (event, ui) =>
-          ###
-          style = @__styleUpdateFlag
-          @__styleUpdateFlag = false
-          ###
+          #style = @__styleUpdateFlag
+          #@__styleUpdateFlag = false
           @frame = FWRectMake(
             ui.position.left
             ui.position.top
             ui.size.width
             ui.size.height
           )
-          ###
-          @__styleUpdateFlag = style
-          ###
-    ###
-    else
-      $(@__viewSelector).resizable
-        disabled: true
-        handles: undefined
-    ###
+          #@__styleUpdateFlag = style
+    #else
+    #  $(@__viewSelector).resizable
+    #    disabled: true
+    #    handles: undefined
+  ###
 
   #===========================================================================
   # setBackgroundColor
@@ -778,7 +751,14 @@ class UIWindow extends FWObject
     newframe.origin = if (frame.origin?) then frame.origin else @frame.origin
     newframe.size = if (frame.size?) then frame.size else @frame.size
 
-    @__setConstraints(newframe, 'frame')
+    #@__setConstraints(newframe, 'frame')
+
+    ret = @__getAbsolutePosition
+      obj: @self
+      x: newframe.origin.x
+      y: newframe.origin.y
+    @frame.origin.pageX = ret.x
+    @frame.origin.pageY = ret.y
 
     @__element.style.left = "#{newframe.origin.x}px"
     @__element.style.top = "#{newframe.origin.y}px"
@@ -792,8 +772,8 @@ class UIWindow extends FWObject
     if (@__element?)
       @__element.style.borderRadius = @cornerRadius+"px"
 
-      $(@__viewSelector).css("-webkit-border-radius", @cornerRadius+"px")
-      $(@__viewSelector).css("-moz-border-radius", @cornerRadius+"px")
+      #$(@__viewSelector).css("-webkit-border-radius", @cornerRadius+"px")
+      #$(@__viewSelector).css("-moz-border-radius", @cornerRadius+"px")
 
   #===========================================================================
   # set constraints
@@ -893,7 +873,7 @@ class UIWindow extends FWObject
     @__element.style["-o-user-select"] = "none"
 
   #===========================================================================
-  #trigger event
+  # trigger event
   #===========================================================================
   __triggerEvent:(element, event)->
     if (document.createEvent)
@@ -905,11 +885,48 @@ class UIWindow extends FWObject
       return element.fireEvent("on"+event, evt)
 
   #===========================================================================
+  # get mouse click position for event
+  #===========================================================================
+  __getMouseClickPosition:(event)->
+    if (event.changedTouches != undefined)
+      e = event.changedTouches[0]
+      pos =
+        offsetX: e.pageX - @frame.origin.pageX
+        offsetY: e.pageY - @frame.origin.pageY
+        pageX: e.pageX
+        pageY: e.pageY
+
+      if (pos.offsetX < 0 || pos.offsetY < 0 || pos.offsetX > @frame.size.width || pos.offsetY > @frame.size.height)
+        @__triggerEvent(@__element, "touchout")
+        return
+
+    else
+      e = event
+      pos =
+        offsetX: e.offsetX
+        offsetY: e.offsetY
+        pageX: e.pageX
+        pageY: e.pageY
+
+    return
+      event: e
+      pos: pos
+
+  #===========================================================================
   # touch event
   #===========================================================================
   touchesBegan:(pos, e)->
+
+  #===========================================================================
+  #===========================================================================
   touchesMoved:(pos, e)->
+
+  #===========================================================================
+  #===========================================================================
   touchesEnded:(pos, e)->
+
+  #===========================================================================
+  #===========================================================================
   touchesCanceled:(pos, e)->
 
 ###
@@ -951,7 +968,7 @@ class [classname] extends UIWindow
   #==================================
   #==================================
   #didBrowserResize:(bounds)->
-  #   super()
+  #   super(bounds)
 
   #==================================
   #==================================
@@ -966,21 +983,21 @@ class [classname] extends UIWindow
   #==================================
   #==================================
   #touchesBegan:(pos, e)->
-  #   super()
+  #   super(pos, e)
 
   #==================================
   #==================================
   #touchesMoved:(pos, e)->
-  #   super()
+  #   super(pos, e)
 
   #==================================
   #==================================
   #touchesEnded:(pos, e)->
-  #   super()
+  #   super(pos, e)
 
   #==================================
   #==================================
   #touchesCanceled:(pos, e)->
-  #   super()
+  #   super(pos, e)
 ---model_end---
 ###
