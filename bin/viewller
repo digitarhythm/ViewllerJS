@@ -100,6 +100,9 @@ system_check = ->
     # create deploy direcotry
     #=========================================================================
     # check first execute
+    target = "#{MODULES_DIR}/package.json"
+    if (!isExists(target)?)
+      execSync("npm init")
     target = NODE_MODULES
     if (!isExists(target)?)
       execSync("npm install viewller")
