@@ -765,14 +765,6 @@ COMPILER_DEV = "#{NODE_MODULES}/.bin/coffee"
 TERSER = "#{NODE_MODULES}/.bin/terser"
 DEPLOY_LENGTH = 4
 
-#=============================================================================
-# create key pair
-#=============================================================================
-public_path = "#{APPS_DIR}/config/public_key.pem"
-private_path = "#{APPS_DIR}/config/private_key.pem"
-if (!isExists(public_path)? || !isExists(private_path)? )
-  createKeyPair()
-
 DEFAULTJSON = undefined
 DEVELOPJSON = undefined
 SYSTEMDB_PATH = undefined
@@ -780,6 +772,17 @@ SYSTEMDB_PATH = undefined
 system_check().then ->
   copy_stationary_file()
 .then ->
+  #=============================================================================
+  # create key pair
+  #=============================================================================
+  public_path = "#{APPS_DIR}/config/public_key.pem"
+  private_path = "#{APPS_DIR}/config/private_key.pem"
+  if (!isExists(public_path)? || !isExists(private_path)? )
+    createKeyPair()
+
+  #===========================================================================
+  # create config file
+  #===========================================================================
   DEFAULTJSON = require("#{APPS_DIR}/config/default.json")
   DEVELOPJSON = require("#{APPS_DIR}/config/develop.json")
   SYSTEMDB_PATH = "#{APPS_DIR}/deploy/database/#{DEFAULTJSON.database.dbfile}"
