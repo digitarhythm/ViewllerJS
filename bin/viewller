@@ -100,7 +100,7 @@ system_check = ->
     # create deploy direcotry
     #=========================================================================
     # check first execute
-    target = "#{MODULES_DIR}/package.json"
+    target = "#{CWD}/package.json"
     if (!isExists(target)?)
       execSync("npm init")
     target = NODE_MODULES
