@@ -99,6 +99,11 @@ system_check = ->
     #=========================================================================
     # create deploy direcotry
     #=========================================================================
+    # check first execute
+    target = NODE_MODULES
+    if (!isExists(target)?)
+      execSync("npm install viewller")
+
     # create deploy directory
     target = "#{APPS_DIR}/deploy"
     if (!isExists(target)?)
